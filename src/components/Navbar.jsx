@@ -25,10 +25,10 @@ const Navbar = ({ currentPage, setCurrentPage, onSignOut }) => {
           {/* Logo */}
           <div className="flex-shrink-0">
             <div className="flex items-center">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-lg">P</span>
+              <div className="w-8 h-8 bg-gradient-to-br from-slate-700 to-slate-900 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-lg">T</span>
               </div>
-              <span className="ml-2 text-xl font-bold text-gray-900">TrackFlow</span>
+              <span className="ml-2 text-xl font-bold text-slate-900">TrackFlow</span>
             </div>
           </div>
 
@@ -41,8 +41,8 @@ const Navbar = ({ currentPage, setCurrentPage, onSignOut }) => {
                   onClick={() => setCurrentPage(item.page)}
                   className={`px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${
                     currentPage === item.page
-                      ? 'bg-blue-600 text-white'
-                      : 'text-gray-700 hover:bg-gray-100'
+                      ? 'bg-gradient-to-r from-slate-700 to-slate-900 text-white shadow-lg'
+                      : 'text-slate-700 hover:bg-slate-100'
                   }`}
                 >
                   {item.name}
@@ -65,7 +65,7 @@ const Navbar = ({ currentPage, setCurrentPage, onSignOut }) => {
           <div className="md:hidden">
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="inline-flex items-center justify-center p-2 rounded-md text-gray-700 hover:text-gray-900 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
+              className="inline-flex items-center justify-center p-2 rounded-md text-slate-700 hover:text-slate-900 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-slate-500"
             >
               <svg
                 className={`${isMenuOpen ? 'hidden' : 'block'} h-6 w-6`}
@@ -102,8 +102,8 @@ const Navbar = ({ currentPage, setCurrentPage, onSignOut }) => {
               }}
               className={`block w-full text-left px-3 py-2 rounded-md text-base font-medium transition-colors duration-200 ${
                 currentPage === item.page
-                  ? 'bg-blue-600 text-white'
-                  : 'text-gray-700 hover:bg-gray-100'
+                  ? 'bg-gradient-to-r from-slate-700 to-slate-900 text-white shadow-lg'
+                  : 'text-slate-700 hover:bg-slate-100'
               }`}
             >
               {item.name}

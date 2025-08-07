@@ -539,18 +539,18 @@ function App() {
     // Show optimized loading screen during initial auth check, auth state changes, or role checking
     if (isLoading || !authInitialized || isRoleChecking) {
       return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
           <div className="text-center">
             <div className="relative">
-              <div className="w-12 h-12 border-4 border-blue-200 rounded-full animate-spin border-t-blue-600 mx-auto"></div>
-              <div className="absolute inset-0 w-12 h-12 border-4 border-transparent rounded-full animate-pulse border-t-blue-400 mx-auto"></div>
+              <div className="w-12 h-12 border-4 border-slate-200 rounded-full animate-spin border-t-slate-600 mx-auto"></div>
+              <div className="absolute inset-0 w-12 h-12 border-4 border-transparent rounded-full animate-pulse border-t-slate-400 mx-auto"></div>
             </div>
             <div className="mt-4">
               <div className="inline-block animate-pulse">
-                <span className="text-blue-600 font-medium">Loading</span>
-                <span className="text-blue-400 animate-bounce inline-block ml-1">.</span>
-                <span className="text-blue-400 animate-bounce inline-block ml-1" style={{animationDelay: '0.1s'}}>.</span>
-                <span className="text-blue-400 animate-bounce inline-block ml-1" style={{animationDelay: '0.2s'}}>.</span>
+                <span className="text-slate-600 font-medium">Loading</span>
+                <span className="text-slate-400 animate-bounce inline-block ml-1">.</span>
+                <span className="text-slate-400 animate-bounce inline-block ml-1" style={{animationDelay: '0.1s'}}>.</span>
+                <span className="text-slate-400 animate-bounce inline-block ml-1" style={{animationDelay: '0.2s'}}>.</span>
               </div>
             </div>
           </div>
@@ -609,7 +609,7 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-slate-50">
       {isAuthenticated && userRole !== 'admin' && (
         <Navbar currentPage={currentPage} setCurrentPage={navigateToPage} onSignOut={handleSignOut} />
       )}

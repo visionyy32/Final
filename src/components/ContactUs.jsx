@@ -78,54 +78,54 @@ const ContactUs = () => {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Hero Section */}
       <div className="text-center mb-12">
-        <h1 className="text-4xl font-bold text-gray-900 mb-4">Contact Us</h1>
-        <p className="text-xl text-gray-600">Get in touch with our team for any inquiries or support</p>
+        <h1 className="text-4xl font-bold text-slate-900 mb-4">Contact Us</h1>
+        <p className="text-xl text-slate-600">Get in touch with our team for any inquiries or support</p>
       </div>
 
       <div className="grid lg:grid-cols-3 gap-8">
         {/* Contact Information */}
         <div className="lg:col-span-1">
           <div className="bg-white rounded-lg shadow-lg p-6 mb-6 hover:shadow-xl transition-shadow">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Get In Touch</h2>
+            <h2 className="text-2xl font-bold text-slate-900 mb-6">Get In Touch</h2>
             
             <div className="space-y-6">
               <div className="flex items-start">
-                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-4">
-                  <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center mr-4">
+                  <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900">Head Office</h3>
-                  <p className="text-gray-600">Nairobi, Kenya</p>
-                  <p className="text-gray-600">Westlands, 5th Floor</p>
+                  <h3 className="font-semibold text-slate-900">Head Office</h3>
+                  <p className="text-slate-600">Nairobi, Kenya</p>
+                  <p className="text-slate-600">Westlands, 5th Floor</p>
                 </div>
               </div>
 
               <div className="flex items-start">
-                <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mr-4">
-                  <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center mr-4">
+                  <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                   </svg>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900">Phone</h3>
-                                     <p className="text-gray-600">+254 714 468 611</p>
-                   <p className="text-gray-600">+254 795 291 982</p>
+                  <h3 className="font-semibold text-slate-900">Phone</h3>
+                                     <p className="text-slate-600">+254 714 468 611</p>
+                   <p className="text-slate-600">+254 795 291 982</p>
                 </div>
               </div>
 
               <div className="flex items-start">
-                <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center mr-4">
-                  <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center mr-4">
+                  <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900">Email</h3>
-                                     <p className="text-gray-600">info@trackflow.co.ke</p>
-                   <p className="text-gray-600">support@trackflow.co.ke</p>
+                  <h3 className="font-semibold text-slate-900">Email</h3>
+                                     <p className="text-slate-600">info@trackflow.co.ke</p>
+                   <p className="text-slate-600">support@trackflow.co.ke</p>
                 </div>
               </div>
 
@@ -136,19 +136,19 @@ const ContactUs = () => {
                   </svg>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900">Business Hours</h3>
-                  <p className="text-gray-600">Monday - Friday: 8:00 AM - 6:00 PM</p>
-                  <p className="text-gray-600">Saturday: 9:00 AM - 4:00 PM</p>
-                  <p className="text-gray-600">Sunday: Closed</p>
+                  <h3 className="font-semibold text-slate-900">Business Hours</h3>
+                  <p className="text-slate-600">Monday - Friday: 8:00 AM - 6:00 PM</p>
+                  <p className="text-slate-600">Saturday: 9:00 AM - 4:00 PM</p>
+                  <p className="text-slate-600">Sunday: Closed</p>
                 </div>
               </div>
             </div>
           </div>
 
           {/* Newsletter Subscription */}
-          <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg shadow-lg p-6 text-white hover:shadow-xl transition-shadow">
+          <div className="bg-gradient-to-r from-slate-700 to-slate-900 rounded-lg shadow-lg p-6 text-white hover:shadow-xl transition-shadow">
             <h3 className="text-xl font-bold mb-4">Subscribe to Newsletter</h3>
-            <p className="text-blue-100 mb-4">
+            <p className="text-slate-200 mb-4">
               Stay updated with our latest services, promotions, and delivery updates.
             </p>
             <form onSubmit={handleNewsletterSubmit} className="space-y-4">
@@ -163,7 +163,7 @@ const ContactUs = () => {
               <button
                 type="submit"
                 disabled={isNewsletterSubmitting}
-                className="w-full bg-white text-blue-600 py-2 px-4 rounded-md font-semibold hover:bg-gray-100 transition-colors disabled:opacity-50"
+                className="w-full bg-white text-slate-700 py-2 px-4 rounded-md font-semibold hover:bg-gray-100 transition-colors disabled:opacity-50"
               >
                 {isNewsletterSubmitting ? 'Subscribing...' : 'Subscribe'}
               </button>
@@ -174,12 +174,12 @@ const ContactUs = () => {
         {/* Contact Form */}
         <div className="lg:col-span-2">
           <div className="bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Send us a Message</h2>
+            <h2 className="text-2xl font-bold text-slate-900 mb-6">Send us a Message</h2>
             
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
                     Full Name *
                   </label>
                   <input
@@ -188,11 +188,11 @@ const ContactUs = () => {
                     value={formData.name}
                     onChange={handleInputChange}
                     required
-                    className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full border border-slate-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-slate-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
                     Email Address *
                   </label>
                   <input
@@ -201,14 +201,14 @@ const ContactUs = () => {
                     value={formData.email}
                     onChange={handleInputChange}
                     required
-                    className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full border border-slate-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-slate-500"
                   />
                 </div>
               </div>
 
               <div className="grid md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
                     Phone Number
                   </label>
                   <input
@@ -216,11 +216,11 @@ const ContactUs = () => {
                     name="phone"
                     value={formData.phone}
                     onChange={handleInputChange}
-                    className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full border border-slate-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-slate-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
                     Subject *
                   </label>
                   <select
@@ -228,7 +228,7 @@ const ContactUs = () => {
                     value={formData.subject}
                     onChange={handleInputChange}
                     required
-                    className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full border border-slate-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-slate-500"
                   >
                     <option value="">Select a subject</option>
                     <option value="general">General Inquiry</option>
@@ -242,7 +242,7 @@ const ContactUs = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-slate-700 mb-2">
                   Message *
                 </label>
                 <textarea
@@ -252,14 +252,14 @@ const ContactUs = () => {
                   required
                   rows={6}
                   placeholder="Please describe your inquiry or concern..."
-                  className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-slate-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-slate-500"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full bg-blue-600 text-white py-3 px-6 rounded-md font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50"
+                className="w-full bg-gradient-to-r from-slate-700 to-slate-900 text-white py-3 px-6 rounded-md font-semibold hover:from-slate-800 hover:to-slate-950 transition-all duration-200 disabled:opacity-50"
               >
                 {isSubmitting ? 'Sending Message...' : 'Send Message'}
               </button>

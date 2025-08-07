@@ -69,13 +69,13 @@ const ParcelTracking = () => {
       case 'delivered':
         return 'text-green-600 bg-green-100'
       case 'in transit':
-        return 'text-blue-600 bg-blue-100'
+        return 'text-slate-600 bg-slate-100'
       case 'picked up':
         return 'text-purple-600 bg-purple-100'
       case 'departed':
         return 'text-orange-600 bg-orange-100'
       default:
-        return 'text-gray-600 bg-gray-100'
+        return 'text-slate-600 bg-slate-100'
     }
   }
 
@@ -83,19 +83,19 @@ const ParcelTracking = () => {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Hero Section */}
       <div className="text-center mb-12">
-        <h1 className="text-4xl font-bold text-gray-900 mb-4">Track Your Parcel</h1>
-        <p className="text-xl text-gray-600">Real-time tracking updates and delivery status</p>
+        <h1 className="text-4xl font-bold text-slate-900 mb-4">Track Your Parcel</h1>
+        <p className="text-xl text-slate-600">Real-time tracking updates and delivery status</p>
       </div>
 
       <div className="grid lg:grid-cols-3 gap-8">
         {/* Tracking Input */}
         <div className="lg:col-span-1">
           <div className="bg-white rounded-lg shadow-lg p-6">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Enter Tracking Number</h2>
+            <h2 className="text-2xl font-bold text-slate-900 mb-6">Enter Tracking Number</h2>
             
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-slate-700 mb-2">
                   Tracking Number
                 </label>
                 <div className="flex">
@@ -104,27 +104,27 @@ const ParcelTracking = () => {
                     value={trackingNumber}
                     onChange={(e) => setTrackingNumber(e.target.value)}
                     placeholder="Enter tracking number (e.g., TRK12345678)"
-                    className="flex-1 border border-gray-300 rounded-l-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="flex-1 border border-slate-300 rounded-l-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-slate-500"
                   />
                   <button
                     onClick={handleTrackParcel}
                     disabled={isLoading}
-                    className="bg-blue-600 text-white px-6 py-2 rounded-r-md hover:bg-blue-700 transition-colors disabled:opacity-50"
+                    className="bg-gradient-to-r from-slate-700 to-slate-900 text-white px-6 py-2 rounded-r-md hover:from-slate-800 hover:to-slate-950 transition-colors disabled:opacity-50 shadow-lg"
                   >
                     {isLoading ? 'Tracking...' : 'Track'}
                   </button>
                 </div>
               </div>
 
-              <div className="text-sm text-gray-600">
-                <p>Try tracking number: <span className="font-mono bg-gray-100 px-2 py-1 rounded">TRK12345678</span></p>
+              <div className="text-sm text-slate-600">
+                <p>Try tracking number: <span className="font-mono bg-slate-100 px-2 py-1 rounded">TRK12345678</span></p>
               </div>
             </div>
 
             {/* Quick Tips */}
-            <div className="mt-8 p-4 bg-blue-50 rounded-lg">
-              <h3 className="font-semibold text-blue-900 mb-2">Tracking Tips</h3>
-              <ul className="text-sm text-blue-800 space-y-1">
+            <div className="mt-8 p-4 bg-slate-50 rounded-lg">
+              <h3 className="font-semibold text-slate-900 mb-2">Tracking Tips</h3>
+              <ul className="text-sm text-slate-800 space-y-1">
                 <li>• Enter your tracking number exactly as provided</li>
                 <li>• Tracking updates every 30 minutes</li>
                 <li>• Contact us if tracking shows no updates for 24 hours</li>
@@ -141,7 +141,7 @@ const ParcelTracking = () => {
               {/* Parcel Summary */}
               <div className="bg-white rounded-lg shadow-lg p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-2xl font-bold text-gray-900">Parcel Details</h2>
+                  <h2 className="text-2xl font-bold text-slate-900">Parcel Details</h2>
                   <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(parcelDetails.status)}`}>
                     {parcelDetails.status}
                   </span>
@@ -149,7 +149,7 @@ const ParcelTracking = () => {
                 
                 <div className="grid md:grid-cols-2 gap-6">
                   <div>
-                    <h3 className="font-semibold text-gray-900 mb-2">Parcel Information</h3>
+                    <h3 className="font-semibold text-slate-900 mb-2">Parcel Information</h3>
                     <div className="space-y-2 text-sm">
                       <p><span className="font-medium">Tracking Number:</span> {parcelDetails.id}</p>
                       <p><span className="font-medium">Service:</span> {parcelDetails.service}</p>
@@ -159,7 +159,7 @@ const ParcelTracking = () => {
                   </div>
                   
                   <div>
-                    <h3 className="font-semibold text-gray-900 mb-2">Delivery Details</h3>
+                    <h3 className="font-semibold text-slate-900 mb-2">Delivery Details</h3>
                     <div className="space-y-2 text-sm">
                       <p><span className="font-medium">From:</span> {parcelDetails.sender}</p>
                       <p><span className="font-medium">To:</span> {parcelDetails.recipient}</p>
@@ -171,10 +171,10 @@ const ParcelTracking = () => {
 
                 {/* Live Track Button */}
                 <div className="mt-6">
-                  <button className="w-full bg-green-600 text-white py-3 px-6 rounded-md font-semibold hover:bg-green-700 transition-colors">
+                  <button className="w-full bg-emerald-600 text-white py-3 px-6 rounded-md font-semibold hover:bg-emerald-700 transition-colors">
                     🗺️ Live Track on Google Maps
                   </button>
-                  <p className="text-xs text-gray-500 mt-2 text-center">
+                  <p className="text-xs text-slate-500 mt-2 text-center">
                     Click to open real-time location tracking on Google Maps
                   </p>
                 </div>
@@ -182,25 +182,25 @@ const ParcelTracking = () => {
 
               {/* Tracking Timeline */}
               <div className="bg-white rounded-lg shadow-lg p-6">
-                <h3 className="text-xl font-bold text-gray-900 mb-6">Tracking Timeline</h3>
+                <h3 className="text-xl font-bold text-slate-900 mb-6">Tracking Timeline</h3>
                 
                 <div className="space-y-4">
                   {parcelDetails.trackingHistory.map((event, index) => (
                     <div key={index} className="flex items-start">
                       <div className="flex-shrink-0">
-                        <div className={`w-4 h-4 rounded-full ${index === 0 ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                        <div className={`w-4 h-4 rounded-full ${index === 0 ? 'bg-emerald-500' : 'bg-slate-300'}`}></div>
                         {index < parcelDetails.trackingHistory.length - 1 && (
-                          <div className="w-0.5 h-8 bg-gray-300 ml-2"></div>
+                          <div className="w-0.5 h-8 bg-slate-300 ml-2"></div>
                         )}
                       </div>
                       
                       <div className="ml-4 flex-1">
                         <div className="flex items-center justify-between">
-                          <h4 className="font-semibold text-gray-900">{event.status}</h4>
-                          <span className="text-sm text-gray-500">{event.date}</span>
+                          <h4 className="font-semibold text-slate-900">{event.status}</h4>
+                          <span className="text-sm text-slate-500">{event.date}</span>
                         </div>
-                        <p className="text-sm text-gray-600 mt-1">{event.location}</p>
-                        <p className="text-sm text-gray-500 mt-1">{event.description}</p>
+                        <p className="text-sm text-slate-600 mt-1">{event.location}</p>
+                        <p className="text-sm text-slate-500 mt-1">{event.description}</p>
                       </div>
                     </div>
                   ))}
@@ -209,25 +209,25 @@ const ParcelTracking = () => {
 
               {/* Current Location Map Placeholder */}
               <div className="bg-white rounded-lg shadow-lg p-6">
-                <h3 className="text-xl font-bold text-gray-900 mb-4">Current Location</h3>
-                <div className="bg-gray-100 rounded-lg h-64 flex items-center justify-center">
+                <h3 className="text-xl font-bold text-slate-900 mb-4">Current Location</h3>
+                <div className="bg-slate-100 rounded-lg h-64 flex items-center justify-center">
                   <div className="text-center">
-                    <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-16 h-16 text-slate-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-1.447-.894L15 4m0 13V4m-6 3l6-3" />
                     </svg>
-                    <p className="text-gray-600">Google Maps integration will be implemented here</p>
-                    <p className="text-sm text-gray-500 mt-2">Current location: {parcelDetails.currentLocation}</p>
+                    <p className="text-slate-600">Google Maps integration will be implemented here</p>
+                    <p className="text-sm text-slate-500 mt-2">Current location: {parcelDetails.currentLocation}</p>
                   </div>
                 </div>
               </div>
             </div>
           ) : (
             <div className="bg-white rounded-lg shadow-lg p-12 text-center">
-              <svg className="w-24 h-24 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-24 h-24 text-slate-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-1.447-.894L15 4m0 13V4m-6 3l6-3" />
               </svg>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Enter a Tracking Number</h3>
-              <p className="text-gray-600">Enter your tracking number above to see real-time updates and delivery status.</p>
+              <h3 className="text-xl font-semibold text-slate-900 mb-2">Enter a Tracking Number</h3>
+              <p className="text-slate-600">Enter your tracking number above to see real-time updates and delivery status.</p>
             </div>
           )}
         </div>

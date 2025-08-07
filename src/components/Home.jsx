@@ -301,13 +301,13 @@ const Home = ({ userData }) => {
       case 'Pending Pickup':
         return 'bg-orange-100 text-orange-800'
       case 'In Transit':
-        return 'bg-blue-100 text-blue-800'
+        return 'bg-slate-100 text-slate-800'
       case 'Delivered':
         return 'bg-green-100 text-green-800'
       case 'Cancelled':
         return 'bg-red-100 text-red-800'
       default:
-        return 'bg-gray-100 text-gray-800'
+        return 'bg-slate-100 text-slate-800'
     }
   }
 
@@ -405,11 +405,11 @@ const Home = ({ userData }) => {
            }}
          ></div>
          
-         <div className="relative z-10 py-8 px-6 bg-gradient-to-r from-blue-50/80 to-indigo-50/80 rounded-lg">
-           <h1 className="text-4xl font-bold text-gray-900 mb-4 drop-shadow-sm">
+         <div className="relative z-10 py-8 px-6 bg-gradient-to-r from-slate-50/80 to-slate-100/80 rounded-lg">
+           <h1 className="text-4xl font-bold text-slate-900 mb-4 drop-shadow-sm">
              Fast & Reliable Parcel Delivery
            </h1>
-           <p className="text-xl text-gray-700 mb-8 drop-shadow-sm">
+           <p className="text-xl text-slate-700 mb-8 drop-shadow-sm">
              Track your parcels in real-time and place new delivery requests
            </p>
          </div>
@@ -417,13 +417,13 @@ const Home = ({ userData }) => {
 
       {/* Tab Navigation */}
       <div className="flex justify-center mb-8">
-        <div className="bg-gray-100 rounded-lg p-1">
+        <div className="bg-slate-100 rounded-lg p-1">
           <button
             onClick={() => setActiveTab('track')}
             className={`px-6 py-3 rounded-md font-medium transition-colors ${
               activeTab === 'track'
-                ? 'bg-blue-600 text-white'
-                : 'text-gray-600 hover:text-gray-900'
+                ? 'bg-gradient-to-r from-slate-700 to-slate-900 text-white shadow-lg'
+                : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             Track Parcel
@@ -432,8 +432,8 @@ const Home = ({ userData }) => {
             onClick={() => setActiveTab('place')}
             className={`px-6 py-3 rounded-md font-medium transition-colors ${
               activeTab === 'place'
-                ? 'bg-blue-600 text-white'
-                : 'text-gray-600 hover:text-gray-900'
+                ? 'bg-gradient-to-r from-slate-700 to-slate-900 text-white shadow-lg'
+                : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             Place Parcel
@@ -442,8 +442,8 @@ const Home = ({ userData }) => {
             onClick={() => setActiveTab('profile')}
             className={`px-6 py-3 rounded-md font-medium transition-colors ${
               activeTab === 'profile'
-                ? 'bg-blue-600 text-white'
-                : 'text-gray-600 hover:text-gray-900'
+                ? 'bg-gradient-to-r from-slate-700 to-slate-900 text-white shadow-lg'
+                : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             Profile
@@ -457,10 +457,10 @@ const Home = ({ userData }) => {
           <div className="grid md:grid-cols-2 gap-8">
             {/* Track Parcel Section */}
             <div className="bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">Track Your Parcel</h2>
+              <h2 className="text-2xl font-bold text-slate-900 mb-4">Track Your Parcel</h2>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
                     Tracking Number
                   </label>
                   <div className="flex">
@@ -469,11 +469,11 @@ const Home = ({ userData }) => {
                       value={trackingNumber}
                       onChange={(e) => setTrackingNumber(e.target.value)}
                       placeholder="Enter tracking number (e.g., TRK12345678)"
-                      className="flex-1 border border-gray-300 rounded-l-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="flex-1 border border-slate-300 rounded-l-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-slate-500"
                     />
                     <button
                       onClick={handleTrackParcel}
-                      className="bg-blue-600 text-white px-6 py-2 rounded-r-md hover:bg-blue-700 transition-colors"
+                      className="bg-gradient-to-r from-slate-700 to-slate-900 text-white px-6 py-2 rounded-r-md hover:from-slate-800 hover:to-slate-950 transition-colors shadow-lg"
                     >
                       Track
                     </button>
@@ -481,7 +481,7 @@ const Home = ({ userData }) => {
                 </div>
 
                 {parcelDetails && (
-                  <div className="bg-gray-50 rounded-lg p-4 mt-4">
+                  <div className="bg-slate-50 rounded-lg p-4 mt-4">
                     <h3 className="font-semibold text-lg mb-2">Parcel Details</h3>
                     <div className="space-y-2 text-sm">
                       <p><span className="font-medium">Status:</span> {parcelDetails.status}</p>
@@ -490,7 +490,7 @@ const Home = ({ userData }) => {
                       <p><span className="font-medium">Estimated Delivery:</span> {parcelDetails.estimatedDelivery}</p>
                       <p><span className="font-medium">Last Update:</span> {parcelDetails.lastUpdate}</p>
                     </div>
-                    <button className="mt-4 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors">
+                    <button className="mt-4 bg-emerald-600 text-white px-4 py-2 rounded hover:bg-emerald-700 transition-colors">
                       Live Track (Google Maps)
                     </button>
                   </div>
@@ -500,20 +500,20 @@ const Home = ({ userData }) => {
 
             {/* Active Parcels Section */}
             <div className="bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">Your Active Parcels</h2>
-              <p className="text-sm text-gray-600 mb-4">Parcels waiting to be picked up or currently in transit</p>
+              <h2 className="text-2xl font-bold text-slate-900 mb-4">Your Active Parcels</h2>
+              <p className="text-sm text-slate-600 mb-4">Parcels waiting to be picked up or currently in transit</p>
               <div className="space-y-4">
                 {loadingParcels ? (
                   <div className="text-center py-6">
                     <div className="relative w-12 h-12 mx-auto mb-3">
-                      <div className="w-12 h-12 border-3 border-blue-200 rounded-full animate-spin border-t-blue-600"></div>
-                      <div className="absolute inset-0 w-12 h-12 border-3 border-transparent rounded-full animate-pulse border-t-blue-400"></div>
+                      <div className="w-12 h-12 border-3 border-slate-200 rounded-full animate-spin border-t-slate-600"></div>
+                      <div className="absolute inset-0 w-12 h-12 border-3 border-transparent rounded-full animate-pulse border-t-slate-400"></div>
                     </div>
                     <div className="inline-block">
-                      <span className="text-blue-600 font-medium">Loading parcels</span>
-                      <span className="text-blue-400 animate-bounce inline-block ml-1">.</span>
-                      <span className="text-blue-400 animate-bounce inline-block ml-1" style={{animationDelay: '0.1s'}}>.</span>
-                      <span className="text-blue-400 animate-bounce inline-block ml-1" style={{animationDelay: '0.2s'}}>.</span>
+                      <span className="text-slate-600 font-medium">Loading parcels</span>
+                      <span className="text-slate-400 animate-bounce inline-block ml-1">.</span>
+                      <span className="text-slate-400 animate-bounce inline-block ml-1" style={{animationDelay: '0.1s'}}>.</span>
+                      <span className="text-slate-400 animate-bounce inline-block ml-1" style={{animationDelay: '0.2s'}}>.</span>
                     </div>
                   </div>
                 ) : userParcels.length > 0 ? (
@@ -525,14 +525,14 @@ const Home = ({ userData }) => {
                     }`}>
                       <div className="flex justify-between items-start mb-3">
                         <div>
-                          <p className="text-xs text-gray-500 mb-1">Tracking Number</p>
-                          <h3 className="font-bold text-lg text-blue-600">{parcel.tracking_number}</h3>
+                          <p className="text-xs text-slate-500 mb-1">Tracking Number</p>
+                          <h3 className="font-bold text-lg text-slate-600">{parcel.tracking_number}</h3>
                         </div>
                                                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(parcel.status)}`}>
                            {parcel.status === 'Pending Pickup' ? 'Awaiting Pickup' : parcel.status}
                          </span>
                       </div>
-                                             <div className="space-y-1 text-sm text-gray-600">
+                                             <div className="space-y-1 text-sm text-slate-600">
                          <div className="grid grid-cols-2 gap-2">
                            <div>
                              <p><span className="font-medium">Sender:</span> {parcel.sender_name}</p>
@@ -546,7 +546,7 @@ const Home = ({ userData }) => {
                              <p><span className="font-medium">County:</span> {parcel.recipient_county || 'N/A'}</p>
                            </div>
                          </div>
-                         <div className="mt-2 pt-2 border-t border-gray-200">
+                         <div className="mt-2 pt-2 border-t border-slate-200">
                            <p><span className="font-medium">Description:</span> {parcel.parcel_description}</p>
                            <p><span className="font-medium">Weight:</span> {parcel.parcel_weight} kg</p>
                            {parcel.parcel_dimensions && (
@@ -574,10 +574,10 @@ const Home = ({ userData }) => {
                          )}
                        </div>
                       <div className="mt-3 flex gap-2">
-                        <button className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition-colors">
+                        <button className="bg-gradient-to-r from-slate-700 to-slate-900 text-white px-3 py-1 rounded text-sm hover:from-slate-800 hover:to-slate-950 transition-colors shadow-lg">
                           Track
                         </button>
-                        <button className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700 transition-colors">
+                        <button className="bg-emerald-600 text-white px-3 py-1 rounded text-sm hover:bg-emerald-700 transition-colors">
                           Live Track
                         </button>
                         {parcel.status === 'Pending Pickup' && (
@@ -593,13 +593,13 @@ const Home = ({ userData }) => {
                   ))
                 ) : (
                   <div className="text-center py-8">
-                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <svg className="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                       </svg>
                     </div>
-                    <p className="text-gray-500">No active parcels found</p>
-                    <p className="text-sm text-gray-400 mt-1">Place a new parcel to get started</p>
+                    <p className="text-slate-500">No active parcels found</p>
+                    <p className="text-sm text-slate-400 mt-1">Place a new parcel to get started</p>
                   </div>
                 )}
               </div>
@@ -611,8 +611,8 @@ const Home = ({ userData }) => {
             <div className="mt-8 bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow">
               <div className="flex justify-between items-center mb-4">
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-900">Completed Deliveries</h2>
-                  <p className="text-sm text-gray-600">Successfully delivered parcels</p>
+                  <h2 className="text-2xl font-bold text-slate-900">Completed Deliveries</h2>
+                  <p className="text-sm text-slate-600">Successfully delivered parcels</p>
                 </div>
                 <button
                   onClick={removeAllCompletedDeliveries}
@@ -623,17 +623,17 @@ const Home = ({ userData }) => {
               </div>
               <div className="space-y-4">
                 {completedParcels.map((parcel) => (
-                  <div key={parcel.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                  <div key={parcel.id} className="border border-slate-200 rounded-lg p-4 hover:bg-slate-50 transition-colors">
                     <div className="flex justify-between items-start mb-3">
                       <div>
-                        <p className="text-xs text-gray-500 mb-1">Tracking Number</p>
-                        <h3 className="font-bold text-lg text-blue-600">{parcel.tracking_number}</h3>
+                        <p className="text-xs text-slate-500 mb-1">Tracking Number</p>
+                        <h3 className="font-bold text-lg text-slate-600">{parcel.tracking_number}</h3>
                       </div>
                       <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(parcel.status)}`}>
                         Delivered
                       </span>
                     </div>
-                    <div className="space-y-1 text-sm text-gray-600">
+                    <div className="space-y-1 text-sm text-slate-600">
                       <p><span className="font-medium">From:</span> {parcel.sender_name}</p>
                       <p><span className="font-medium">To:</span> {parcel.recipient_name}</p>
                       <p><span className="font-medium">Description:</span> {parcel.parcel_description}</p>
@@ -666,18 +666,18 @@ const Home = ({ userData }) => {
           {/* Cost Calculation Section - appears after placing parcel */}
           {userParcels.length > 0 && (
             <div className="mt-8 bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">Calculate Shipping Cost</h2>
+              <h2 className="text-2xl font-bold text-slate-900 mb-4">Calculate Shipping Cost</h2>
               <div className="space-y-4">
                 <button
                   onClick={handleCostCalculation}
                   disabled={isCalculating}
-                  className="w-full bg-green-600 text-white py-3 px-4 rounded-md hover:bg-green-700 transition-colors disabled:opacity-50"
+                  className="w-full bg-emerald-600 text-white py-3 px-4 rounded-md hover:bg-emerald-700 transition-colors disabled:opacity-50"
                 >
                   {isCalculating ? 'Calculating...' : 'Calculate Cost'}
                 </button>
 
                 {costEstimate && (
-                  <div className="bg-gray-50 rounded-lg p-4">
+                  <div className="bg-slate-50 rounded-lg p-4">
                     <h3 className="font-semibold text-lg mb-2">Cost Estimate</h3>
                     <div className="space-y-2 text-sm">
                       <p><span className="font-medium">Weight:</span> {costEstimate.weight} kg</p>
@@ -690,7 +690,7 @@ const Home = ({ userData }) => {
                     {!isPaymentComplete ? (
                       <button
                         onClick={handlePayment}
-                        className="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
+                        className="mt-4 bg-gradient-to-r from-slate-700 to-slate-900 text-white px-4 py-2 rounded hover:from-slate-800 hover:to-slate-950 transition-colors shadow-lg"
                       >
                         Proceed to Payment
                       </button>
@@ -725,23 +725,23 @@ const Home = ({ userData }) => {
         ></div>
         
         <div className="relative z-10 text-center bg-white/80 backdrop-blur-sm rounded-lg p-6 hover:transform hover:scale-105 transition-all duration-300 shadow-md hover:shadow-lg">
-          <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-1.447-.894L15 4m0 13V4m-6 3l6-3" />
             </svg>
           </div>
           <h3 className="text-lg font-semibold mb-2">📍 Real-time Tracking</h3>
-          <p className="text-gray-700">Track your parcels with live updates and GPS location</p>
+          <p className="text-slate-700">Track your parcels with live updates and GPS location</p>
         </div>
 
         <div className="relative z-10 text-center bg-white/80 backdrop-blur-sm rounded-lg p-6 hover:transform hover:scale-105 transition-all duration-300 shadow-md hover:shadow-lg">
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
             </svg>
           </div>
           <h3 className="text-lg font-semibold mb-2">💰 Instant Pricing</h3>
-          <p className="text-gray-700">Get accurate cost estimates instantly</p>
+          <p className="text-slate-700">Get accurate cost estimates instantly</p>
         </div>
 
         <div className="relative z-10 text-center bg-white/80 backdrop-blur-sm rounded-lg p-6 hover:transform hover:scale-105 transition-all duration-300 shadow-md hover:shadow-lg">
@@ -751,7 +751,7 @@ const Home = ({ userData }) => {
             </svg>
           </div>
           <h3 className="text-lg font-semibold mb-2">⚡ Fast Delivery</h3>
-          <p className="text-gray-700">Express and standard delivery options available</p>
+          <p className="text-slate-700">Express and standard delivery options available</p>
         </div>
       </div>
 
@@ -759,10 +759,10 @@ const Home = ({ userData }) => {
       </div>
       
       {/* Simple Footer */}
-      <div className="bg-blue-600 text-white py-6">
+      <div className="bg-gradient-to-r from-slate-700 to-slate-900 text-white py-6">
         <div className="text-center">
           <h3 className="text-xl font-bold mb-2">TrackFlow</h3>
-          <p className="text-blue-100 text-sm">© 2025 All rights reserved</p>
+          <p className="text-slate-200 text-sm">© 2025 All rights reserved</p>
         </div>
       </div>
     </div>
