@@ -114,18 +114,12 @@ export const parcelService = {
     return { data, error }
   },
 
-  // Get all parcels (admin only)
+  // Get all parcels (admin/dispatcher)
   async getAllParcels() {
+    // Avoid joining with users table to prevent infinite recursion in policies
     const { data, error } = await supabase
       .from('parcels')
-      .select(`
-        *,
-        users (
-          id,
-          name,
-          email
-        )
-      `)
+      .select('*')
       .order('created_at', { ascending: false })
     return { data, error }
   },
@@ -219,41 +213,20 @@ export const supportService = {
     const insertData = {
       ...messageData,
       user_id: user?.id || null
-      // Note: source column doesn't exist in the database yet
     }
     
     console.log('Inserting support message:', insertData)
     
-    // Try insert without authentication first (for anonymous users)
-    let { data, error } = await supabase
+    const { data, error } = await supabase
       .from('support_messages')
       .insert([insertData])
+      .select()
     
     if (error) {
       console.error('Supabase error details:', error)
       console.error('Error code:', error.code)
       console.error('Error message:', error.message)
       console.error('Error details:', error.details)
-      
-      // If it's a permissions error, try with explicit user_id
-      if (error.code === 'PGRST301' || error.message?.includes('permission')) {
-        console.log('Trying with explicit user_id...')
-        const retryData = {
-          ...messageData,
-          user_id: null // Explicitly set to null for anonymous users
-          // Note: source column doesn't exist in the database yet
-        }
-        
-        const retryResult = await supabase
-          .from('support_messages')
-          .insert([retryData])
-        
-        if (retryResult.error) {
-          console.error('Retry error:', retryResult.error)
-        }
-        
-        return retryResult
-      }
     }
     
     return { data, error }
@@ -481,6 +454,62 @@ export const adminLogService = {
   }
 }
 
+// Notification functions
+export const notificationService = {
+  // Get user notifications
+  async getUserNotifications(userId) {
+    const { data, error } = await supabase
+      .from('notifications')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(50)
+    return { data, error }
+  },
+
+  // Mark notification as read
+  async markAsRead(notificationId) {
+    const { data, error } = await supabase
+      .from('notifications')
+      .update({ read: true })
+      .eq('id', notificationId)
+      .select()
+    return { data, error }
+  },
+
+  // Create a new notification
+  async createNotification(notification) {
+    const { data, error } = await supabase
+      .from('notifications')
+      .insert([notification])
+      .select()
+    return { data, error }
+  },
+
+  // Get unread count
+  async getUnreadCount(userId) {
+    const { count, error } = await supabase
+      .from('notifications')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .eq('read', false)
+    return { count, error }
+  },
+
+  // Subscribe to new notifications
+  subscribeToNotifications(userId, callback) {
+    return supabase
+      .channel(`notifications-${userId}`)
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'notifications',
+        filter: `user_id=eq.${userId}`
+      }, callback)
+      .subscribe()
+  }
+}
+
 // Real-time subscriptions
 export const realtimeService = {
   // Subscribe to parcel updates
@@ -518,4 +547,4 @@ export const realtimeService = {
       }, callback)
       .subscribe()
   }
-} 
+}

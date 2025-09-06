@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react'
-import { supportService } from '../services/supabaseService'
 import SpecialDeliveryBooking from './SpecialDeliveryBooking'
 import ColdChainBooking from './ColdChainBooking'
 import InternationalShippingBooking from './InternationalShippingBooking'
@@ -39,30 +38,19 @@ const LandingPage = ({ onSignIn, onSignUp }) => {
   const [selectedService, setSelectedService] = useState(null)
   const [bookingSuccess, setBookingSuccess] = useState(null)
   
-  // Contact form state
-  const [contactForm, setContactForm] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    subject: '',
-    message: ''
-  })
-  const [isSubmittingContact, setIsSubmittingContact] = useState(false)
-  const [contactSubmitSuccess, setContactSubmitSuccess] = useState(false)
-  
   const images = [
     '/images/landing1.jpg',
     '/images/landing2.jpg',
     '/images/landing3.jpg'
   ]
 
-  // Auto-slide effect with improved timing
+  // Auto-slide effect
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentImageIndex((prevIndex) => 
         prevIndex === images.length - 1 ? 0 : prevIndex + 1
       )
-    }, 4000) // Change image every 4 seconds for smoother experience
+    }, 5000) // Change image every 5 seconds
 
     return () => clearInterval(interval)
   }, [images.length])
@@ -136,52 +124,6 @@ const LandingPage = ({ onSignIn, onSignUp }) => {
       console.log('Tracking:', trackingNumber)
       // For now, just show an alert
       alert(`Tracking package: ${trackingNumber}`)
-    }
-  }
-
-  // Handle contact form submission
-  const handleContactSubmit = async (e) => {
-    e.preventDefault()
-    setIsSubmittingContact(true)
-    
-    try {
-      // Prepare the message data for the support_messages table
-      const messageData = {
-        name: `${contactForm.firstName} ${contactForm.lastName}`.trim(),
-        email: contactForm.email,
-        subject: contactForm.subject || 'General Inquiry',
-        message: contactForm.message,
-        status: 'Pending' // Changed from 'open' to 'Pending' to match database schema
-      }
-      
-      // Submit to support messages database
-      const { data, error } = await supportService.createSupportMessage(messageData)
-      
-      if (error) {
-        console.error('Error submitting contact form:', error)
-        alert('Failed to send message. Please try again.')
-      } else {
-        console.log('Contact message sent successfully:', data)
-        setContactSubmitSuccess(true)
-        // Reset form
-        setContactForm({
-          firstName: '',
-          lastName: '',
-          email: '',
-          subject: '',
-          message: ''
-        })
-        
-        // Hide success message after 5 seconds
-        setTimeout(() => {
-          setContactSubmitSuccess(false)
-        }, 5000)
-      }
-    } catch (error) {
-      console.error('Unexpected error:', error)
-      alert('Failed to send message. Please try again.')
-    } finally {
-      setIsSubmittingContact(false)
     }
   }
 
@@ -315,33 +257,26 @@ const LandingPage = ({ onSignIn, onSignUp }) => {
         {/* Enhanced Hero Section with Full Content - HOME */}
         <div id="home" className="relative h-[600px] overflow-hidden bg-slate-900">
           {/* Images with enhanced transitions */}
-          <div className="relative w-full h-full">
-            {images.map((image, index) => (
-              <div
-                key={index}
-                className={`absolute inset-0 w-full h-full transition-all duration-1000 ease-in-out transform ${
-                  currentImageIndex === index 
-                    ? 'opacity-100 scale-100' 
-                    : 'opacity-0 scale-105'
-                }`}
+          {images.map((image, index) => (
+            <div
+              key={index}
+              className={`absolute inset-0 w-full h-full transition-opacity duration-1000 ease-in-out ${
+                currentImageIndex === index ? 'opacity-100' : 'opacity-0'
+              }`}
+            >
+              <img
+                src={image}
+                alt={`Landing slide ${index + 1}`}
+                className="w-full h-full object-cover scale-125"
                 style={{
-                  zIndex: currentImageIndex === index ? 10 : 1
+                  objectPosition: 'center 25%',
+                  filter: 'brightness(0.85) contrast(1.1)'
                 }}
-              >
-                <img
-                  src={image}
-                  alt={`Landing slide ${index + 1}`}
-                  className="w-full h-full object-cover"
-                  style={{
-                    objectPosition: 'center 25%',
-                    filter: 'brightness(0.85) contrast(1.1)'
-                  }}
-                />
-                {/* Enhanced gradient overlay */}
-                <div className="absolute inset-0 bg-gradient-to-r from-slate-900/60 via-slate-800/40 to-transparent"></div>
-              </div>
-            ))}
-          </div>
+              />
+              {/* Enhanced gradient overlay */}
+              <div className="absolute inset-0 bg-gradient-to-r from-slate-900/60 via-slate-800/40 to-transparent"></div>
+            </div>
+          ))}
 
           {/* Enhanced Navigation Dots */}
           <div className="absolute bottom-12 left-1/2 transform -translate-x-1/2 flex space-x-4">
@@ -803,301 +738,75 @@ const LandingPage = ({ onSignIn, onSignUp }) => {
         </div>
       </div>
       
-      {/* Contact Information Section */}
-      <div id="contact" className="bg-gradient-to-br from-slate-50 via-white to-slate-100 py-16">
-        <div className="max-w-6xl mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4">
-              Get in Touch
-            </h2>
-            <p className="text-xl text-slate-600 max-w-3xl mx-auto">
-              Have questions about our services? Need support? We're here to help you with all your parcel tracking and delivery needs.
-            </p>
-          </div>
-          
-          <div className="grid lg:grid-cols-2 gap-12">
-            {/* Contact Information */}
-            <div className="space-y-8">
-              <h3 className="text-2xl font-semibold text-slate-900 mb-6">Contact Information</h3>
-              
-              {/* Contact Cards */}
-              <div className="grid sm:grid-cols-2 gap-6">
-                {/* Address Card */}
-                <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-slate-200/50 hover:shadow-xl transition-all duration-300">
-                  <div className="flex items-start space-x-4">
-                    <div className="bg-gradient-to-r from-slate-700 to-slate-900 p-3 rounded-xl">
-                      <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-slate-900 mb-1">Our Office</h4>
-                      <p className="text-slate-600 text-sm leading-relaxed">
-                        123 TrackFlow Avenue<br />
-                        Business District<br />
-                        City, State 12345
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Phone Card */}
-                <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-slate-200/50 hover:shadow-xl transition-all duration-300">
-                  <div className="flex items-start space-x-4">
-                    <div className="bg-gradient-to-r from-slate-700 to-slate-900 p-3 rounded-xl">
-                      <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-slate-900 mb-1">Phone</h4>
-                      <p className="text-slate-600 text-sm">
-                        0703748709<br />
-                        <span className="text-xs text-slate-500">Mon-Fri 8AM-6PM</span>
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Email Card */}
-                <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-slate-200/50 hover:shadow-xl transition-all duration-300">
-                  <div className="flex items-start space-x-4">
-                    <div className="bg-gradient-to-r from-slate-700 to-slate-900 p-3 rounded-xl">
-                      <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-slate-900 mb-1">Email</h4>
-                      <p className="text-slate-600 text-sm">
-                        support@trackflow.com<br />
-                        <span className="text-xs text-slate-500">24/7 Support</span>
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Hours Card */}
-                <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-slate-200/50 hover:shadow-xl transition-all duration-300">
-                  <div className="flex items-start space-x-4">
-                    <div className="bg-gradient-to-r from-slate-700 to-slate-900 p-3 rounded-xl">
-                      <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-slate-900 mb-1">Business Hours</h4>
-                      <p className="text-slate-600 text-sm">
-                        Mon - Fri: 8:00 AM - 6:00 PM<br />
-                        <span className="text-xs text-slate-500">Weekend: 9:00 AM - 4:00 PM</span>
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Terms of Service */}
-              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6">
-                <h4 className="text-lg font-semibold text-slate-900 mb-4 flex items-center">
-                  <svg className="w-5 h-5 mr-2 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                  Terms of Service
-                </h4>
-                <div className="text-slate-600 text-sm space-y-2">
-                  <p>
-                    By using TrackFlow services, you agree to our terms and conditions. We are committed to providing secure and reliable parcel delivery services.
-                  </p>
-                  <div className="flex flex-wrap gap-4 mt-3">
-                    <a href="#" className="text-slate-700 hover:text-slate-900 font-medium underline decoration-slate-300 hover:decoration-slate-700 transition-colors">
-                      Terms & Conditions
-                    </a>
-                    <a href="#" className="text-slate-700 hover:text-slate-900 font-medium underline decoration-slate-300 hover:decoration-slate-700 transition-colors">
-                      Privacy Policy
-                    </a>
-                    <a href="#" className="text-slate-700 hover:text-slate-900 font-medium underline decoration-slate-300 hover:decoration-slate-700 transition-colors">
-                      Service Agreement
-                    </a>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Contact Form */}
-            <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-8 shadow-lg border border-slate-200/50">
-              <h3 className="text-2xl font-semibold text-slate-900 mb-6">Send us a Message</h3>
-              
-              {/* Success Message */}
-              {contactSubmitSuccess && (
-                <div className="mb-6 p-4 bg-green-100 border border-green-400 text-green-700 rounded-lg">
-                  <div className="flex items-center">
-                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                    Thank you! Your message has been sent successfully. We'll get back to you soon.
-                  </div>
-                </div>
-              )}
-              
-              <form onSubmit={handleContactSubmit} className="space-y-6">
-                <div className="grid sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">
-                      First Name
-                    </label>
-                    <input
-                      type="text"
-                      value={contactForm.firstName}
-                      onChange={(e) => setContactForm({ ...contactForm, firstName: e.target.value })}
-                      className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-slate-500 transition-colors"
-                      placeholder="John"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">
-                      Last Name
-                    </label>
-                    <input
-                      type="text"
-                      value={contactForm.lastName}
-                      onChange={(e) => setContactForm({ ...contactForm, lastName: e.target.value })}
-                      className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-slate-500 transition-colors"
-                      placeholder="Doe"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Email Address
-                  </label>
-                  <input
-                    type="email"
-                    value={contactForm.email}
-                    onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
-                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-slate-500 transition-colors"
-                    placeholder="john@example.com"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Subject
-                  </label>
-                  <select 
-                    value={contactForm.subject}
-                    onChange={(e) => setContactForm({ ...contactForm, subject: e.target.value })}
-                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-slate-500 transition-colors"
-                    required
-                  >
-                    <option value="">Select a subject</option>
-                    <option value="general">General Inquiry</option>
-                    <option value="tracking">Tracking Issue</option>
-                    <option value="shipping">Shipping Question</option>
-                    <option value="support">Technical Support</option>
-                    <option value="billing">Billing Question</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Message
-                  </label>
-                  <textarea
-                    rows={4}
-                    value={contactForm.message}
-                    onChange={(e) => setContactForm({ ...contactForm, message: e.target.value })}
-                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-slate-500 transition-colors resize-none"
-                    placeholder="Tell us how we can help you..."
-                    required
-                  ></textarea>
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={isSubmittingContact}
-                  className="w-full bg-gradient-to-r from-slate-700 to-slate-900 text-white py-3 px-6 rounded-lg font-semibold hover:from-slate-800 hover:to-slate-950 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-                >
-                  {isSubmittingContact ? (
-                    <div className="flex items-center justify-center">
-                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Sending...
-                    </div>
-                  ) : (
-                    'Send Message'
-                  )}
-                </button>
-              </form>
-            </div>
-          </div>
-        </div>
-      </div>
-      
       {/* Enhanced Sign In Modal */}
       {isSignInOpen && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-[9999] p-4 overflow-y-auto">
-          <div className="bg-white rounded-3xl p-8 w-full max-w-lg mx-4 shadow-2xl border-2 border-slate-300 transform transition-all duration-500 scale-100 my-8 animate-[fadeInScale_0.4s_ease-out]">
+        <div 
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[9999] p-4"
+          onClick={(e) => e.target === e.currentTarget && setIsSignInOpen(false)}
+        >
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md mx-4 shadow-xl border border-slate-200 transform transition-all duration-300 scale-100 animate-[fadeInScale_0.3s_ease-out] relative">
+            {/* Close button */}
+            <button
+              onClick={() => setIsSignInOpen(false)}
+              className="absolute top-3 right-3 text-slate-400 hover:text-slate-600 text-xl font-bold w-6 h-6 flex items-center justify-center rounded-full hover:bg-slate-100 transition-all duration-200"
+            >
+              ×
+            </button>
+            
             <div className="text-center mb-6">
-              <div className="w-20 h-20 bg-gradient-to-br from-slate-700 to-slate-900 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-xl border-4 border-white">
-                <span className="text-white font-bold text-3xl">T</span>
+              <div className="w-12 h-12 bg-gradient-to-br from-slate-700 to-slate-900 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+                <span className="text-white font-bold text-lg">T</span>
               </div>
-              <h2 className="text-3xl font-bold text-slate-900 mb-2">Welcome Back</h2>
-              <p className="text-slate-600 text-lg">Sign in to your TrackFlow account</p>
+              <h2 className="text-xl font-bold text-slate-900 mb-1">Welcome Back</h2>
+              <p className="text-slate-600 text-sm">Sign in to your TrackFlow account</p>
             </div>
             
-            <form onSubmit={handleSignIn} className="space-y-5">
+            <form onSubmit={handleSignIn} className="space-y-4">
               <div>
-                <label className="block text-base font-semibold text-slate-700 mb-2">Email Address</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Email Address</label>
                 <input
                   type="email"
                   value={signInData.email}
                   onChange={(e) => setSignInData({...signInData, email: e.target.value})}
                   required
-                  className="w-full border-2 border-slate-300 rounded-xl px-4 py-4 text-base focus:outline-none focus:ring-4 focus:ring-slate-200 focus:border-slate-600 transition-all duration-300 text-slate-900 bg-slate-50 hover:bg-white"
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 transition-all duration-200 text-slate-900 bg-white"
                   placeholder="Enter your email"
                 />
               </div>
               <div>
-                <label className="block text-base font-semibold text-slate-700 mb-2">Password</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Password</label>
                 <input
                   type="password"
                   value={signInData.password}
                   onChange={(e) => setSignInData({...signInData, password: e.target.value})}
                   required
-                  className="w-full border-2 border-slate-300 rounded-xl px-4 py-4 text-base focus:outline-none focus:ring-4 focus:ring-slate-200 focus:border-slate-600 transition-all duration-300 text-slate-900 bg-slate-50 hover:bg-white"
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 transition-all duration-200 text-slate-900 bg-white"
                   placeholder="Enter your password"
                 />
               </div>
               <div>
-                <label className="block text-base font-semibold text-slate-700 mb-2">Account Type</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Account Type</label>
                 <select
                   value={signInData.role}
                   onChange={(e) => setSignInData({...signInData, role: e.target.value})}
-                  className="w-full border-2 border-slate-300 rounded-xl px-4 py-4 text-base focus:outline-none focus:ring-4 focus:ring-slate-200 focus:border-slate-600 transition-all duration-300 text-slate-900 bg-slate-50 hover:bg-white"
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 transition-all duration-200 text-slate-900 bg-white"
                 >
                   <option value="user">Customer</option>
                   <option value="dispatcher">Dispatcher</option>
                   <option value="admin">Administrator</option>
                 </select>
               </div>
-              <div className="flex gap-4 pt-6">
+              <div className="flex gap-3 pt-4">
                 <button
                   type="submit"
-                  className="flex-1 bg-gradient-to-r from-slate-700 to-slate-900 text-white py-4 px-6 rounded-xl text-lg font-semibold hover:from-slate-800 hover:to-slate-950 transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-105 transform active:scale-95"
+                  className="flex-1 bg-gradient-to-r from-slate-700 to-slate-900 text-white py-2.5 px-4 rounded-lg text-sm font-semibold hover:from-slate-800 hover:to-slate-950 transition-all duration-200 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-slate-300"
                 >
                   Sign In
                 </button>
                 <button
                   type="button"
                   onClick={() => setIsSignInOpen(false)}
-                  className="flex-1 bg-slate-200 text-slate-700 py-4 px-6 rounded-xl text-lg font-semibold hover:bg-slate-300 transition-all duration-300 border-2 border-slate-300 hover:border-slate-400"
+                  className="flex-1 bg-slate-100 text-slate-700 py-2.5 px-4 rounded-lg text-sm font-semibold hover:bg-slate-200 transition-all duration-200 border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-300"
                 >
                   Cancel
                 </button>
@@ -1109,9 +818,117 @@ const LandingPage = ({ onSignIn, onSignUp }) => {
 
       {/* Enhanced Sign Up Modal */}
       {isSignUpOpen && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-[9999] p-4 overflow-y-auto">
-          <div className="bg-white rounded-3xl p-8 w-full max-w-lg mx-4 shadow-2xl border-2 border-slate-300 transform transition-all duration-500 scale-100 my-8 animate-[fadeInScale_0.4s_ease-out]">
-            <div className="text-center mb-6">
+        <div 
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[9999] p-4 overflow-y-auto"
+          onClick={(e) => e.target === e.currentTarget && setIsSignUpOpen(false)}
+        >
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md mx-4 shadow-xl border border-slate-200 transform transition-all duration-300 scale-100 animate-[fadeInScale_0.3s_ease-out] relative my-8">
+            {/* Close button */}
+            <button
+              onClick={() => setIsSignUpOpen(false)}
+              className="absolute top-3 right-3 text-slate-400 hover:text-slate-600 text-xl font-bold w-6 h-6 flex items-center justify-center rounded-full hover:bg-slate-100 transition-all duration-200"
+            >
+              ×
+            </button>
+            
+            <div className="text-center mb-5">
+              <div className="w-12 h-12 bg-gradient-to-br from-slate-700 to-slate-900 rounded-xl flex items-center justify-center mx-auto mb-3 shadow-lg">
+                <span className="text-white font-bold text-lg">T</span>
+              </div>
+              <h2 className="text-xl font-bold text-slate-900 mb-1">Join TrackFlow</h2>
+              <p className="text-slate-600 text-sm">Create your account to get started</p>
+            </div>
+            
+            <form onSubmit={handleSignUp} className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Full Name</label>
+                <input
+                  type="text"
+                  value={signUpData.name}
+                  onChange={(e) => setSignUpData({...signUpData, name: e.target.value})}
+                  required
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 transition-all duration-200 text-slate-900 bg-white"
+                  placeholder="Enter your full name"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Email Address</label>
+                <input
+                  type="email"
+                  value={signUpData.email}
+                  onChange={(e) => setSignUpData({...signUpData, email: e.target.value})}
+                  required
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 transition-all duration-200 text-slate-900 bg-white"
+                  placeholder="Enter your email"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Phone Number</label>
+                <input
+                  type="tel"
+                  value={signUpData.phone}
+                  onChange={(e) => setSignUpData({...signUpData, phone: e.target.value})}
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 transition-all duration-200 text-slate-900 bg-white"
+                  placeholder="Phone number (optional)"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Account Type</label>
+                <select
+                  value={signUpData.role}
+                  onChange={(e) => setSignUpData({...signUpData, role: e.target.value})}
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 transition-all duration-200 text-slate-900 bg-white"
+                >
+                  <option value="user">Customer</option>
+                  <option value="dispatcher">Dispatcher</option>
+                  <option value="admin">Administrator</option>
+                </select>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Password</label>
+                  <input
+                    type="password"
+                    value={signUpData.password}
+                    onChange={(e) => setSignUpData({...signUpData, password: e.target.value})}
+                    required
+                    minLength={6}
+                    className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 transition-all duration-200 text-slate-900 bg-white"
+                    placeholder="Min. 6 characters"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Confirm Password</label>
+                  <input
+                    type="password"
+                    value={signUpData.confirmPassword}
+                    onChange={(e) => setSignUpData({...signUpData, confirmPassword: e.target.value})}
+                    required
+                    minLength={6}
+                    className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 transition-all duration-200 text-slate-900 bg-white"
+                    placeholder="Confirm password"
+                  />
+                </div>
+              </div>
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="submit"
+                  className="flex-1 bg-gradient-to-r from-slate-700 to-slate-900 text-white py-2.5 px-4 rounded-lg text-sm font-semibold hover:from-slate-800 hover:to-slate-950 transition-all duration-200 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-slate-300"
+                >
+                  Sign Up
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsSignUpOpen(false)}
+                  className="flex-1 bg-slate-100 text-slate-700 py-2.5 px-4 rounded-lg text-sm font-semibold hover:bg-slate-200 transition-all duration-200 border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-300"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
               <div className="w-20 h-20 bg-gradient-to-br from-slate-700 to-slate-900 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-xl border-4 border-white">
                 <span className="text-white font-bold text-3xl">T</span>
               </div>
@@ -1345,7 +1162,7 @@ const LandingPage = ({ onSignIn, onSignUp }) => {
                   { name: 'Our Services', href: '#services' },
                   { name: 'Track Parcel', href: '/tracking' },
                   { name: 'About Us', href: '/about' },
-                  { name: 'Contact', href: '#contact' }
+                  { name: 'Contact', href: '/contact' }
                 ].map((link, index) => (
                   <li key={index}>
                     <a 
@@ -1418,7 +1235,7 @@ const LandingPage = ({ onSignIn, onSignUp }) => {
                     </svg>
                   </a>
                   <a 
-                    href="https://web.facebook.com/profile.php?id=61580428439241" 
+                    href="https://www.facebook.com/trackflow" 
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center hover:bg-blue-700 hover:shadow-md hover:shadow-blue-600/25 transform hover:scale-110 hover:rotate-3 transition-all duration-200"
@@ -1428,7 +1245,7 @@ const LandingPage = ({ onSignIn, onSignUp }) => {
                     </svg>
                   </a>
                   <a 
-                    href="https://x.com/Trackflow47" 
+                    href="https://twitter.com/trackflow_ke" 
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="w-8 h-8 bg-gray-700 rounded-lg flex items-center justify-center hover:bg-gray-600 hover:shadow-md hover:shadow-gray-500/25 transform hover:scale-110 hover:-rotate-3 transition-all duration-200"
@@ -1438,7 +1255,7 @@ const LandingPage = ({ onSignIn, onSignUp }) => {
                     </svg>
                   </a>
                   <a 
-                    href="https://www.linkedin.com/in/cedrick-kipkurui-84316827b/" 
+                    href="https://www.linkedin.com/company/trackflow" 
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center hover:bg-blue-700 hover:shadow-md hover:shadow-blue-600/25 transform hover:scale-110 hover:rotate-3 transition-all duration-200"

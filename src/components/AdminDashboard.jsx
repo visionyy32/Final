@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { userService, parcelService, supportService, chatService, adminLogService } from '../services/supabaseService'
+import { specialDeliveryService } from '../services/specialDeliveryService'
 import { supabase } from '../lib/supabase'
 
 const AdminDashboard = ({ onSignOut }) => {
@@ -28,6 +29,13 @@ const AdminDashboard = ({ onSignOut }) => {
   const [loadingParcels, setLoadingParcels] = useState(false)
   const [loadingSupport, setLoadingSupport] = useState(false)
   const [loadingChats, setLoadingChats] = useState(false)
+
+  // Bookings state
+  const [specialDeliveryOrders, setSpecialDeliveryOrders] = useState([])
+  const [quoteRequests, setQuoteRequests] = useState([])
+  const [loadingBookings, setLoadingBookings] = useState(false)
+  const [bookingsFilter, setBookingsFilter] = useState('all') // all, pending, confirmed, delivered
+  const [quotesFilter, setQuotesFilter] = useState('all') // all, pending, resolved
 
   // Reply modal state
   const [showReplyModal, setShowReplyModal] = useState(false)
@@ -200,6 +208,40 @@ If you need any immediate assistance, please don't hesitate to call our customer
       console.error('Error loading chat sessions:', error)
     } finally {
       setLoadingChats(false)
+    }
+  }
+
+  // Load bookings data (special delivery orders and quote requests)
+  const loadBookingsData = async () => {
+    setLoadingBookings(true)
+    try {
+      // Load special delivery orders
+      const ordersResult = await specialDeliveryService.getAllOrders()
+      if (ordersResult.success) {
+        setSpecialDeliveryOrders(ordersResult.data || [])
+      } else {
+        console.error('Error loading special delivery orders:', ordersResult.error)
+      }
+
+      // Load support messages that might be quote requests
+      const { data: supportData, error: supportError } = await supportService.getAllSupportMessages()
+      if (supportError) {
+        console.error('Error loading support messages for quotes:', supportError)
+      } else {
+        // Filter messages that might be quote requests
+        const quoteMessages = supportData?.filter(msg => 
+          msg.subject === 'general' || 
+          msg.message?.toLowerCase().includes('quote') ||
+          msg.message?.toLowerCase().includes('price') ||
+          msg.message?.toLowerCase().includes('cost') ||
+          msg.subject === 'partnership'
+        ) || []
+        setQuoteRequests(quoteMessages)
+      }
+    } catch (error) {
+      console.error('Error loading bookings data:', error)
+    } finally {
+      setLoadingBookings(false)
     }
   }
 
@@ -520,6 +562,30 @@ If you need any immediate assistance, please don't hesitate to call our customer
     }
   }, [parcels])
 
+  // Handle special delivery order status update
+  const handleUpdateSpecialDeliveryStatus = useCallback(async (orderId, newStatus) => {
+    try {
+      const result = await specialDeliveryService.updateOrderStatus(orderId, newStatus)
+      if (!result.success) {
+        console.error('Error updating special delivery order status:', result.error)
+        alert('Error updating order status. Please try again.')
+        return
+      }
+
+      // Update local state
+      setSpecialDeliveryOrders(prev => 
+        prev.map(order => 
+          order.id === orderId ? { ...order, status: newStatus } : order
+        )
+      )
+
+      console.log(`Special delivery order ${orderId} status updated to: ${newStatus}`)
+    } catch (error) {
+      console.error('Error updating special delivery order status:', error)
+      alert('Error updating order status. Please try again.')
+    }
+  }, [])
+
   // Load data from Supabase
   useEffect(() => {
     const loadData = async () => {
@@ -611,6 +677,10 @@ If you need any immediate assistance, please don't hesitate to call our customer
           setLoadingSupport(false)
         }
       }
+
+      if (activeTab === 'bookings') {
+        loadBookingsData()
+      }
     }
 
     loadData()
@@ -658,6 +728,21 @@ If you need any immediate assistance, please don't hesitate to call our customer
     }
   }
 
+  // Filter functions for bookings
+  const filteredSpecialDeliveryOrders = useMemo(() => {
+    if (bookingsFilter === 'all') return specialDeliveryOrders
+    return specialDeliveryOrders.filter(order => order.status === bookingsFilter)
+  }, [specialDeliveryOrders, bookingsFilter])
+
+  const filteredQuoteRequests = useMemo(() => {
+    if (quotesFilter === 'all') return quoteRequests
+    return quoteRequests.filter(request => {
+      if (quotesFilter === 'pending') return !request.status || request.status !== 'Resolved'
+      if (quotesFilter === 'resolved') return request.status === 'Resolved'
+      return true
+    })
+  }, [quoteRequests, quotesFilter])
+
   // Memoized stats calculation for better performance
   const stats = useMemo(() => calculateStats(parcels), [parcels])
   
@@ -697,7 +782,7 @@ If you need any immediate assistance, please don't hesitate to call our customer
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <nav className="flex space-x-8" aria-label="Tabs">
-            {['overview', 'users', 'parcels', 'support', 'livechat'].map((tab) => (
+            {['overview', 'users', 'parcels', 'bookings', 'support', 'livechat'].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -1201,6 +1286,234 @@ If you need any immediate assistance, please don't hesitate to call our customer
                     </li>
                   )}
                 </ul>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Bookings Tab */}
+        {activeTab === 'bookings' && (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold text-gray-900">Bookings & Quotes Management</h2>
+              <div className="flex space-x-4">
+                <button
+                  onClick={loadBookingsData}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700"
+                >
+                  Refresh Data
+                </button>
+              </div>
+            </div>
+            
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="bg-white p-6 rounded-lg shadow">
+                <div className="flex items-center">
+                  <div className="p-2 bg-purple-100 rounded-md">
+                    <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                  </div>
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-gray-600">Special Deliveries</p>
+                    <p className="text-2xl font-semibold text-gray-900">{specialDeliveryOrders.length}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white p-6 rounded-lg shadow">
+                <div className="flex items-center">
+                  <div className="p-2 bg-orange-100 rounded-md">
+                    <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-gray-600">Quote Requests</p>
+                    <p className="text-2xl font-semibold text-gray-900">{quoteRequests.length}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white p-6 rounded-lg shadow">
+                <div className="flex items-center">
+                  <div className="p-2 bg-green-100 rounded-md">
+                    <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                    </svg>
+                  </div>
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-gray-600">Total Revenue</p>
+                    <p className="text-2xl font-semibold text-gray-900">
+                      KSh {specialDeliveryOrders.reduce((total, order) => total + (order.total_cost || 0), 0).toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white p-6 rounded-lg shadow">
+                <div className="flex items-center">
+                  <div className="p-2 bg-blue-100 rounded-md">
+                    <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                    </svg>
+                  </div>
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-gray-600">This Month</p>
+                    <p className="text-2xl font-semibold text-gray-900">
+                      {specialDeliveryOrders.filter(order => {
+                        const orderDate = new Date(order.created_at)
+                        const now = new Date()
+                        return orderDate.getMonth() === now.getMonth() && orderDate.getFullYear() === now.getFullYear()
+                      }).length}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {loadingBookings ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                <span className="ml-2 text-gray-600">Loading bookings...</span>
+              </div>
+            ) : (
+              <div className="grid lg:grid-cols-2 gap-6">
+                
+                {/* Special Delivery Orders */}
+                <div className="bg-white rounded-lg shadow">
+                  <div className="px-6 py-4 border-b border-gray-200">
+                    <div className="flex justify-between items-center">
+                      <h3 className="text-lg font-medium text-gray-900">Special Delivery Orders</h3>
+                      <select
+                        value={bookingsFilter}
+                        onChange={(e) => setBookingsFilter(e.target.value)}
+                        className="text-sm border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="all">All Orders</option>
+                        <option value="pending">Pending</option>
+                        <option value="confirmed">Confirmed</option>
+                        <option value="picked_up">Picked Up</option>
+                        <option value="in_transit">In Transit</option>
+                        <option value="delivered">Delivered</option>
+                        <option value="cancelled">Cancelled</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="divide-y divide-gray-200 max-h-96 overflow-y-auto">
+                    {filteredSpecialDeliveryOrders.length > 0 ? filteredSpecialDeliveryOrders.map((order) => (
+                      <div key={order.id} className="px-6 py-4">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-2">
+                              <h4 className="text-sm font-medium text-gray-900">Order #{order.order_number}</h4>
+                              <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                                order.status === 'confirmed' ? 'bg-green-100 text-green-800' :
+                                order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                                order.status === 'completed' ? 'bg-blue-100 text-blue-800' :
+                                'bg-gray-100 text-gray-800'
+                              }`}>
+                                {order.status || 'Pending'}
+                              </span>
+                            </div>
+                            <div className="mt-1 text-sm text-gray-600">
+                              <p><strong>Service:</strong> {order.service_type?.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</p>
+                              <p><strong>From:</strong> {order.pickup_location}</p>
+                              <p><strong>To:</strong> {order.delivery_location}</p>
+                              <p><strong>Distance:</strong> {order.distance}km</p>
+                              <p><strong>Total:</strong> KSh {order.total_cost?.toLocaleString()}</p>
+                            </div>
+                            <div className="mt-2 text-sm text-gray-500">
+                              <p><strong>Contact:</strong> {order.sender_name} - {order.sender_phone}</p>
+                              {order.sender_email && <p><strong>Email:</strong> {order.sender_email}</p>}
+                              <p><strong>Date:</strong> {new Date(order.created_at).toLocaleDateString()}</p>
+                            </div>
+                          </div>
+                          <div className="ml-4 flex-shrink-0">
+                            <select
+                              value={order.status || 'pending'}
+                              onChange={(e) => handleUpdateSpecialDeliveryStatus(order.id, e.target.value)}
+                              className="mt-1 block w-full pl-3 pr-10 py-1 text-sm border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 rounded-md"
+                            >
+                              <option value="pending">Pending</option>
+                              <option value="confirmed">Confirmed</option>
+                              <option value="picked_up">Picked Up</option>
+                              <option value="in_transit">In Transit</option>
+                              <option value="delivered">Delivered</option>
+                              <option value="cancelled">Cancelled</option>
+                            </select>
+                          </div>
+                        </div>
+                      </div>
+                    )) : (
+                      <div className="px-6 py-4 text-center text-gray-500">
+                        No special delivery orders found
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Quote Requests */}
+                <div className="bg-white rounded-lg shadow">
+                  <div className="px-6 py-4 border-b border-gray-200">
+                    <div className="flex justify-between items-center">
+                      <h3 className="text-lg font-medium text-gray-900">Quote Requests</h3>
+                      <select
+                        value={quotesFilter}
+                        onChange={(e) => setQuotesFilter(e.target.value)}
+                        className="text-sm border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="all">All Quotes</option>
+                        <option value="pending">Pending</option>
+                        <option value="resolved">Resolved</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="divide-y divide-gray-200 max-h-96 overflow-y-auto">
+                    {filteredQuoteRequests.length > 0 ? filteredQuoteRequests.map((request) => (
+                      <div key={request.id} className="px-6 py-4">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-2">
+                              <h4 className="text-sm font-medium text-gray-900">{request.subject || 'Quote Request'}</h4>
+                              <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                                request.status === 'Resolved' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                              }`}>
+                                {request.status || 'Pending'}
+                              </span>
+                            </div>
+                            <div className="mt-1 text-sm text-gray-600">
+                              <p><strong>From:</strong> {request.name}</p>
+                              <p><strong>Email:</strong> {request.email}</p>
+                              {request.phone && <p><strong>Phone:</strong> {request.phone}</p>}
+                            </div>
+                            <div className="mt-2 text-sm text-gray-700">
+                              <p className="line-clamp-3">{request.message}</p>
+                            </div>
+                            <div className="mt-2 text-xs text-gray-500">
+                              {new Date(request.created_at).toLocaleString()}
+                            </div>
+                          </div>
+                          <div className="ml-4 flex-shrink-0">
+                            {request.status !== 'Resolved' && (
+                              <button
+                                onClick={() => handleReplyToMessage(request)}
+                                className="bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700"
+                              >
+                                Respond
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )) : (
+                      <div className="px-6 py-4 text-center text-gray-500">
+                        No quote requests found
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             )}
           </div>

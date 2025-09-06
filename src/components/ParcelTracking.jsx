@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import GoogleMapTracker from './GoogleMapTracker'
 
 const ParcelTracking = () => {
   const [trackingNumber, setTrackingNumber] = useState('')
@@ -41,6 +42,45 @@ const ParcelTracking = () => {
         {
           date: '2024-01-11 16:45',
           location: 'Nairobi, Kenya',
+          status: 'Order Confirmed',
+          description: 'Order received and confirmed'
+        }
+      ]
+    },
+    'TRK98765432': {
+      id: 'TRK98765432',
+      status: 'Delivered',
+      location: 'Kisumu, Kenya',
+      destination: 'Eldoret, Kenya',
+      estimatedDelivery: '2024-01-10',
+      currentLocation: 'Eldoret, Kenya',
+      lastUpdate: '2024-01-10 16:45',
+      sender: 'Mary Wilson',
+      recipient: 'David Brown',
+      weight: '1.2 kg',
+      service: 'Standard Delivery',
+      trackingHistory: [
+        {
+          date: '2024-01-10 16:45',
+          location: 'Eldoret, Kenya',
+          status: 'Delivered',
+          description: 'Package delivered successfully to recipient'
+        },
+        {
+          date: '2024-01-10 12:30',
+          location: 'Eldoret, Kenya',
+          status: 'Out for Delivery',
+          description: 'Package is out for final delivery'
+        },
+        {
+          date: '2024-01-09 14:15',
+          location: 'Kisumu, Kenya',
+          status: 'Picked Up',
+          description: 'Package picked up from sender'
+        },
+        {
+          date: '2024-01-09 09:00',
+          location: 'Kisumu, Kenya',
           status: 'Order Confirmed',
           description: 'Order received and confirmed'
         }
@@ -207,16 +247,40 @@ const ParcelTracking = () => {
                 </div>
               </div>
 
-              {/* Current Location Map Placeholder */}
+              {/* Current Location Map */}
               <div className="bg-white rounded-lg shadow-lg p-6">
-                <h3 className="text-xl font-bold text-slate-900 mb-4">Current Location</h3>
-                <div className="bg-slate-100 rounded-lg h-64 flex items-center justify-center">
-                  <div className="text-center">
-                    <svg className="w-16 h-16 text-slate-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-1.447-.894L15 4m0 13V4m-6 3l6-3" />
-                    </svg>
-                    <p className="text-slate-600">Google Maps integration will be implemented here</p>
-                    <p className="text-sm text-slate-500 mt-2">Current location: {parcelDetails.currentLocation}</p>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-xl font-bold text-slate-900">Live Tracking Map</h3>
+                  <div className="flex items-center text-sm text-slate-600">
+                    <div className="w-3 h-3 bg-green-500 rounded-full mr-2 animate-pulse"></div>
+                    Live Updates
+                  </div>
+                </div>
+                
+                <GoogleMapTracker parcelData={parcelDetails} />
+                
+                <div className="mt-4 text-center">
+                  <p className="text-sm text-slate-600">
+                    📍 Current location: <span className="font-semibold">{parcelDetails.currentLocation}</span>
+                  </p>
+                  <p className="text-xs text-slate-500 mt-1">
+                    Last updated: {parcelDetails.lastUpdate}
+                  </p>
+                </div>
+
+                {/* Map Legend */}
+                <div className="mt-4 flex justify-center space-x-6 text-xs text-slate-600">
+                  <div className="flex items-center">
+                    <div className="w-3 h-3 bg-green-500 rounded-full mr-1"></div>
+                    Origin
+                  </div>
+                  <div className="flex items-center">
+                    <div className="w-3 h-3 bg-blue-500 rounded-full mr-1"></div>
+                    Current
+                  </div>
+                  <div className="flex items-center">
+                    <div className="w-3 h-3 bg-red-500 rounded-full mr-1"></div>
+                    Destination
                   </div>
                 </div>
               </div>

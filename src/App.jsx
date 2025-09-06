@@ -1,14 +1,18 @@
 import { useState, useEffect, useLayoutEffect } from 'react'
 import { supabase } from './lib/supabase'
 import { authService } from './services/supabaseService'
+import { getCurrentPage, clearCurrentPage } from './lib/navigation'
 import LandingPage from './components/LandingPage'
 import Navbar from './components/Navbar'
+import PublicNavbar from './components/PublicNavbar'
 import Home from './components/Home'
 import AboutUs from './components/AboutUs'
 import ContactUs from './components/ContactUs'
 import ParcelTracking from './components/ParcelTracking'
 import FAQ from './components/FAQ'
 import AdminDashboard from './components/AdminDashboard'
+import DispatcherDashboard from './components/DispatcherDashboard'
+import OrderHistory from './components/OrderHistory'
 
 function App() {
   const [currentPage, setCurrentPage] = useState('landing')
@@ -19,57 +23,144 @@ function App() {
   const [authInitialized, setAuthInitialized] = useState(false)
   const [isRoleChecking, setIsRoleChecking] = useState(false) // New state for role checking
 
-  // Get current page from URL
+  // Get current page from localStorage
   const getCurrentPageFromURL = () => {
-    const path = window.location.pathname
-    if (path === '/' || path === '') return 'home'
-    const page = path.substring(1) // Remove leading slash
+    // First check if there's a page in localStorage
+    const storedPage = getCurrentPage();
+    const validPages = ['home', 'about', 'contact', 'tracking', 'faq', 'admin', 'dispatcher', 'landing', 'history'];
     
-    // Validate page exists
-    const validPages = ['home', 'about', 'contact', 'tracking', 'faq', 'admin', 'landing']
-    return validPages.includes(page) ? page : 'home'
+    if (storedPage && validPages.includes(storedPage)) {
+      return storedPage;
+    }
+    
+    // Default to landing
+    return 'landing';
   }
 
   // Update URL when page changes
   const navigateToPage = (page) => {
-    const url = page === 'home' ? '/' : `/${page}`
-    window.history.pushState(null, '', url)
-    setCurrentPage(page)
+    // Ensure the page is valid
+    const validPages = ['home', 'about', 'contact', 'tracking', 'faq', 'admin', 'dispatcher', 'landing', 'history'];
+    if (!validPages.includes(page)) {
+      console.error(`Invalid page: ${page}`);
+      page = 'landing';
+    }
+    
+    // Store the page in localStorage
+    localStorage.setItem('currentPage', page);
+    
+    // Update the current page state
+    setCurrentPage(page);
+    
+    // Scroll to top of page for better user experience
+    window.scrollTo(0, 0);
   }
 
-  // Handle browser back/forward buttons
+  // Handle browser back/forward buttons and page refresh
   useEffect(() => {
     const handlePopState = () => {
       const page = getCurrentPageFromURL()
+      // Don't allow navigation away from dispatcher dashboard for dispatchers
+      if (userRole === 'dispatcher' && page !== 'dispatcher') {
+        console.log('Preventing dispatcher navigation away from dashboard')
+        setCurrentPage('dispatcher')
+        navigateToPage('dispatcher')
+        return
+      }
+      // Don't allow navigation away from admin dashboard for admins
+      if (userRole === 'admin' && page !== 'admin') {
+        console.log('Preventing admin navigation away from dashboard')
+        setCurrentPage('admin')
+        navigateToPage('admin')
+        return
+      }
       setCurrentPage(page)
     }
 
-    window.addEventListener('popstate', handlePopState)
-    return () => window.removeEventListener('popstate', handlePopState)
-  }, [])
+    // Handle custom navigation events from navigateTo function
+    const handleNavigate = (event) => {
+      const page = event.detail.page;
+      // Don't allow programmatic navigation away from dispatcher for dispatchers
+      if (userRole === 'dispatcher' && page !== 'dispatcher') {
+        console.log('Blocking programmatic navigation away from dispatcher dashboard')
+        return
+      }
+      // Don't allow programmatic navigation away from admin for admins
+      if (userRole === 'admin' && page !== 'admin') {
+        console.log('Blocking programmatic navigation away from admin dashboard')
+        return
+      }
+      setCurrentPage(page);
+    }
 
-  // Handle visibility change to prevent unnecessary auth checks
+    window.addEventListener('popstate', handlePopState)
+    window.addEventListener('navigate', handleNavigate)
+    
+    return () => {
+      window.removeEventListener('popstate', handlePopState)
+      window.removeEventListener('navigate', handleNavigate)
+    }
+  }, [userRole]) // Add userRole as dependency
+
+  // Handle visibility change to prevent unnecessary auth checks and preserve role-based routing
   useEffect(() => {
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible' && isAuthenticated && userRole === 'admin') {
-        console.log('Tab became visible, preserving admin state')
+      if (document.visibilityState === 'visible' && isAuthenticated) {
+        console.log('Tab became visible, preserving user role state:', userRole)
+        
+        // Check session storage for active role to ensure consistency
+        const storedRole = sessionStorage.getItem('activeRole')
+        
         // Force admin page if admin user
-        if (currentPage !== 'admin') {
+        if (userRole === 'admin' && currentPage !== 'admin') {
+          console.log('Preserving admin state on tab switch')
+          setCurrentPage('admin')
+          navigateToPage('admin')
+        }
+        
+        // Force dispatcher page if dispatcher user
+        else if (userRole === 'dispatcher' && currentPage !== 'dispatcher') {
+          console.log('Preserving dispatcher state on tab switch')
+          setCurrentPage('dispatcher')
+          navigateToPage('dispatcher')
+        }
+        
+        // Double-check against stored role for extra safety
+        else if (storedRole === 'dispatcher' && userRole === 'dispatcher' && currentPage !== 'dispatcher') {
+          console.log('Restoring dispatcher state from session storage')
+          setCurrentPage('dispatcher')
+          navigateToPage('dispatcher')
+        }
+        else if (storedRole === 'admin' && userRole === 'admin' && currentPage !== 'admin') {
+          console.log('Restoring admin state from session storage')
           setCurrentPage('admin')
           navigateToPage('admin')
         }
       }
     }
 
+    const handleWindowFocus = () => {
+      if (isAuthenticated && userRole === 'dispatcher' && currentPage !== 'dispatcher') {
+        console.log('Window focused, ensuring dispatcher stays on dispatcher dashboard')
+        setCurrentPage('dispatcher')
+        navigateToPage('dispatcher')
+      }
+    }
+
     document.addEventListener('visibilitychange', handleVisibilityChange)
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
+    window.addEventListener('focus', handleWindowFocus)
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      window.removeEventListener('focus', handleWindowFocus)
+    }
   }, [isAuthenticated, userRole, currentPage])
 
-  // Initialize page from URL on load
+  // Initialize page from localStorage on load
   useEffect(() => {
-    const page = getCurrentPageFromURL()
-    setCurrentPage(page)
-  }, [])
+    const page = getCurrentPageFromURL();
+    setCurrentPage(page);
+  }, []);
 
   // Check for existing authentication session
   useEffect(() => {
@@ -133,9 +224,17 @@ function App() {
               if (userRole === 'admin') {
                 setCurrentPage('admin')
                 navigateToPage('admin')
+                // Store admin session state
+                sessionStorage.setItem('activeRole', 'admin')
+              } else if (userRole === 'dispatcher') {
+                setCurrentPage('dispatcher')
+                navigateToPage('dispatcher')
+                // Store dispatcher session state
+                sessionStorage.setItem('activeRole', 'dispatcher')
               } else {
                 // Only set page to home if we're on landing page
                 const currentURLPage = getCurrentPageFromURL()
+                sessionStorage.setItem('activeRole', 'user')
                 if (currentURLPage === 'landing' || currentURLPage === 'home') {
                   setCurrentPage('home')
                   navigateToPage('home')
@@ -275,6 +374,9 @@ function App() {
             if (userRole === 'admin') {
               setCurrentPage('admin')
               navigateToPage('admin')
+            } else if (userRole === 'dispatcher') {
+              setCurrentPage('dispatcher')
+              navigateToPage('dispatcher')
             } else {
               // Only navigate to home if we're on landing page
               const currentURLPage = getCurrentPageFromURL()
@@ -382,6 +484,9 @@ function App() {
           if (signInData.role === 'admin') {
             setCurrentPage('admin')
             navigateToPage('admin')
+          } else if (signInData.role === 'dispatcher') {
+            setCurrentPage('dispatcher')
+            navigateToPage('dispatcher')
           } else {
             setCurrentPage('home')
             navigateToPage('home')
@@ -476,6 +581,9 @@ function App() {
           if (signUpData.role === 'admin') {
             setCurrentPage('admin')
             navigateToPage('admin')
+          } else if (signUpData.role === 'dispatcher') {
+            setCurrentPage('dispatcher')
+            navigateToPage('dispatcher')
           } else {
             setCurrentPage('home')
             navigateToPage('home')
@@ -507,23 +615,29 @@ function App() {
     try {
       // Clear cached role data before signing out
       if (userData?.id) {
-        localStorage.removeItem(`userRole_${userData.id}`)
+        localStorage.removeItem(`userRole_${userData.id}`);
       }
       
-      const { error } = await authService.signOut()
+      // Clear session storage for role persistence
+      sessionStorage.removeItem('activeRole');
+      
+      // Clear current page 
+      clearCurrentPage();
+      
+      const { error } = await authService.signOut();
       if (error) {
-        console.error('Sign out error:', error)
+        console.error('Sign out error:', error);
       }
     } catch (error) {
-      console.error('Sign out error:', error)
+      console.error('Sign out error:', error);
     }
 
-    setIsAuthenticated(false)
-    setUserRole(null)
-    setUserData(null)
-    navigateToPage('landing')
-    setIsLoading(false)
-    alert('You have been signed out successfully.')
+    setIsAuthenticated(false);
+    setUserRole(null);
+    setUserData(null);
+    navigateToPage('landing');
+    setIsLoading(false);
+    alert('You have been signed out successfully.');
   }
 
   // Force admin state synchronously to prevent any intermediate renders
@@ -536,6 +650,21 @@ function App() {
   }, [isAuthenticated, userRole, currentPage])
 
   const renderPage = () => {
+    // 🛡️ ULTRA-AGGRESSIVE DISPATCHER PROTECTION - VERY FIRST CHECK
+    const emergencyDispatcherLock = localStorage.getItem('dispatcherLock')
+    const emergencyStoredRole = sessionStorage.getItem('activeRole')
+    
+    if (emergencyDispatcherLock === 'true' || emergencyStoredRole === 'dispatcher') {
+      console.log('🛡️ ULTRA-AGGRESSIVE DISPATCHER LOCK ENGAGED - IMMEDIATE BYPASS')
+      console.log('🔍 State check:', { userRole, currentPage, isAuthenticated, isLoading, authInitialized, isRoleChecking })
+      
+      // Bypass ALL loading screens for dispatcher
+      if (isLoading || !authInitialized || isRoleChecking) {
+        console.log('⚡ Bypassing loading screens for locked dispatcher')
+        return <DispatcherDashboard onSignOut={handleSignOut} />
+      }
+    }
+
     // Show optimized loading screen during initial auth check, auth state changes, or role checking
     if (isLoading || !authInitialized || isRoleChecking) {
       return (
@@ -558,17 +687,101 @@ function App() {
       )
     }
 
+    // 🚨 EMERGENCY DISPATCHER LOCK CHECK - HIGHEST PRIORITY 🚨
+    const dispatcherLock = localStorage.getItem('dispatcherLock')
+    const storedRole = sessionStorage.getItem('activeRole')
+    console.log('🔍 EMERGENCY CHECK - Dispatcher locks:', { dispatcherLock, storedRole, userRole, currentPage, isAuthenticated })
+    
+    if (dispatcherLock === 'true' || storedRole === 'dispatcher') {
+      console.log('🚨 EMERGENCY DISPATCHER RESTORE ACTIVATED - BYPASSING ALL OTHER CHECKS')
+      
+      // Force dispatcher state if not already set
+      if (userRole !== 'dispatcher' || currentPage !== 'dispatcher' || !isAuthenticated) {
+        console.log('🔧 Emergency restoration:', { 
+          needsRoleRestore: userRole !== 'dispatcher',
+          needsPageRestore: currentPage !== 'dispatcher', 
+          needsAuthRestore: !isAuthenticated 
+        })
+        
+        // Immediate state restoration
+        if (userRole !== 'dispatcher') setUserRole('dispatcher')
+        if (currentPage !== 'dispatcher') {
+          setCurrentPage('dispatcher')
+          navigateToPage('dispatcher')
+        }
+        if (!isAuthenticated) setIsAuthenticated(true)
+      }
+      
+      console.log('🔒 FORCING DISPATCHER DASHBOARD - EMERGENCY MODE')
+      return <DispatcherDashboard onSignOut={handleSignOut} />
+    }
+
     // Show landing page immediately if not authenticated
     if (!isAuthenticated) {
-      // If trying to access protected routes while not authenticated, redirect to landing
+      // Allow access to about, contact, tracking, and faq pages even for non-authenticated users
       const currentURLPage = getCurrentPageFromURL()
-      if (currentURLPage !== 'landing' && currentURLPage !== 'home') {
+      if (currentURLPage === 'about') {
+        return (
+          <>
+            <PublicNavbar />
+            <main className="pt-16">
+              <AboutUs />
+            </main>
+          </>
+        )
+      } else if (currentURLPage === 'contact') {
+        return (
+          <>
+            <PublicNavbar />
+            <main className="pt-16">
+              <ContactUs />
+            </main>
+          </>
+        )
+      } else if (currentURLPage === 'tracking') {
+        return (
+          <>
+            <PublicNavbar />
+            <main className="pt-16">
+              <ParcelTracking />
+            </main>
+          </>
+        )
+      } else if (currentURLPage === 'faq') {
+        return (
+          <>
+            <PublicNavbar />
+            <main className="pt-16">
+              <FAQ />
+            </main>
+          </>
+        )
+      } else if (currentURLPage !== 'landing') {
         navigateToPage('landing')
       }
       return <LandingPage onSignIn={handleSignIn} onSignUp={handleSignUp} onSignOut={handleSignOut} />
     }
 
-    // CRITICAL: Handle admin users first to prevent any flickering
+    // CRITICAL: Handle dispatcher users FIRST to prevent any transitions to user mode
+    if (userRole === 'dispatcher') {
+      console.log('🔒 DISPATCHER MODE: Locked in dispatcher dashboard. Current page:', currentPage, 'User role:', userRole)
+      
+      // Force dispatcher page no matter what
+      if (currentPage !== 'dispatcher') {
+        console.log('🔄 Forcing dispatcher page from:', currentPage)
+        setCurrentPage('dispatcher')
+        navigateToPage('dispatcher')
+      }
+      
+      // Store dispatcher state aggressively
+      sessionStorage.setItem('activeRole', 'dispatcher')
+      localStorage.setItem('dispatcherLock', 'true')
+      
+      // Always return dispatcher dashboard for dispatcher users - NO EXCEPTIONS
+      return <DispatcherDashboard onSignOut={handleSignOut} />
+    }
+
+    // CRITICAL: Handle admin users second
     if (userRole === 'admin') {
       // Ensure admin page is set if it isn't already
       if (currentPage !== 'admin') {
@@ -579,8 +792,13 @@ function App() {
       return <AdminDashboard onSignOut={handleSignOut} />
     }
 
-    // Handle admin routes - only admins can access admin pages (redundant safety check)
+    // Handle admin/dispatcher routes - only admins/dispatchers can access these pages
     if (currentPage === 'admin' && userRole !== 'admin') {
+      navigateToPage('home')
+      return <Home userData={userData} />
+    }
+
+    if (currentPage === 'dispatcher' && userRole !== 'dispatcher') {
       navigateToPage('home')
       return <Home userData={userData} />
     }
@@ -601,8 +819,14 @@ function App() {
         // This should never be reached for non-admin users
         navigateToPage('home')
         return <Home userData={userData} />
+      case 'dispatcher':
+        // This should never be reached for non-dispatcher users
+        navigateToPage('home')
+        return <Home userData={userData} />
       case 'landing':
         return <LandingPage onSignIn={handleSignIn} onSignUp={handleSignUp} onSignOut={handleSignOut} />
+      case 'history':
+        return <OrderHistory userData={userData} />
       default:
         return <Home userData={userData} />
     }
@@ -610,10 +834,10 @@ function App() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {isAuthenticated && userRole !== 'admin' && (
+      {isAuthenticated && userRole !== 'admin' && userRole !== 'dispatcher' && (
         <Navbar currentPage={currentPage} setCurrentPage={navigateToPage} onSignOut={handleSignOut} />
       )}
-      <main className={isAuthenticated && userRole !== 'admin' ? 'pt-16' : ''}>
+      <main className={isAuthenticated && userRole !== 'admin' && userRole !== 'dispatcher' ? 'pt-16' : ''}>
         {renderPage()}
       </main>
     </div>

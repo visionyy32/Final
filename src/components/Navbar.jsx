@@ -1,7 +1,13 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { supabase } from '../lib/supabase'
+import { notificationService } from '../services/supabaseService'
+import NotificationPanel from './NotificationPanel'
 
 const Navbar = ({ currentPage, setCurrentPage, onSignOut }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [unreadCount, setUnreadCount] = useState(0)
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false)
+  const [userData, setUserData] = useState(null)
 
   const navItems = [
     { name: 'Home', page: 'home' },
@@ -11,12 +17,71 @@ const Navbar = ({ currentPage, setCurrentPage, onSignOut }) => {
     { name: 'FAQ', page: 'faq' }
   ]
 
+  // Get current user and notification count
+  useEffect(() => {
+    const getUserData = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        setUserData(user)
+        loadUnreadCount(user.id)
+
+        // Subscribe to notifications
+        const subscription = notificationService.subscribeToNotifications(
+          user.id,
+          () => loadUnreadCount(user.id)
+        )
+
+        return () => {
+          subscription.unsubscribe()
+        }
+      }
+    }
+
+    getUserData()
+  }, [])
+
+  const loadUnreadCount = async (userId) => {
+    try {
+      const { count, error } = await notificationService.getUnreadCount(userId)
+      if (!error) {
+        setUnreadCount(count || 0)
+      }
+    } catch (error) {
+      console.error('Error loading unread count:', error)
+    }
+  }
+
   const handleSignOut = () => {
     const confirmed = window.confirm('Are you sure you want to sign out?')
     if (confirmed && onSignOut) {
       onSignOut()
     }
   }
+
+  const NotificationIcon = () => (
+    <button
+      onClick={() => setIsNotificationsOpen(true)}
+      className="relative px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 text-slate-700 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500 flex items-center gap-2 dark:text-slate-300 dark:hover:bg-slate-700 dark:focus:ring-slate-400"
+      style={{ colorScheme: 'light dark' }}
+    >
+      <span className="sr-only">View notifications</span>
+      <svg 
+        className="h-5 w-5 transition-colors" 
+        fill="none" 
+        stroke="currentColor" 
+        viewBox="0 0 24 24"
+        style={{ color: 'inherit' }}
+      >
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+      </svg>
+      <span className="hidden sm:block">Notifications</span>
+      {unreadCount > 0 && (
+        <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-red-500 text-white text-xs font-bold flex items-center justify-center ring-2 ring-white dark:ring-slate-800 animate-pulse">
+          {unreadCount > 9 ? '9+' : unreadCount}
+        </span>
+      )}
+    </button>
+  )
 
   return (
     <nav className="bg-white shadow-lg fixed w-full top-0 z-50">
@@ -39,15 +104,16 @@ const Navbar = ({ currentPage, setCurrentPage, onSignOut }) => {
                 <button
                   key={item.name}
                   onClick={() => setCurrentPage(item.page)}
-                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${
+                  className={`px-3 py-2 rounded-md text-sm font-medium transition-all duration-300 ease-in-out transform ${
                     currentPage === item.page
-                      ? 'bg-gradient-to-r from-slate-700 to-slate-900 text-white shadow-lg'
-                      : 'text-slate-700 hover:bg-slate-100'
-                  }`}
+                      ? 'bg-gradient-to-r from-slate-700 to-slate-900 text-white shadow-lg scale-105'
+                      : 'text-slate-700 hover:bg-gradient-to-r hover:from-slate-700 hover:to-slate-900 hover:text-white hover:shadow-lg hover:scale-105 active:scale-95'
+                  } dark:text-slate-300 dark:hover:from-slate-600 dark:hover:to-slate-800`}
                 >
                   {item.name}
                 </button>
               ))}
+              <NotificationIcon />
             </div>
           </div>
 
@@ -55,7 +121,7 @@ const Navbar = ({ currentPage, setCurrentPage, onSignOut }) => {
           <div className="hidden md:block">
             <button
               onClick={handleSignOut}
-              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200"
+              className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white px-4 py-2 rounded-md text-sm font-medium transition-all duration-300 hover:shadow-lg transform hover:scale-105 active:scale-95 ease-in-out"
             >
               Sign Out
             </button>
@@ -100,28 +166,61 @@ const Navbar = ({ currentPage, setCurrentPage, onSignOut }) => {
                 setCurrentPage(item.page)
                 setIsMenuOpen(false)
               }}
-              className={`block w-full text-left px-3 py-2 rounded-md text-base font-medium transition-colors duration-200 ${
+              className={`block w-full text-left px-3 py-2 rounded-md text-base font-medium transition-all duration-300 ease-in-out transform ${
                 currentPage === item.page
-                  ? 'bg-gradient-to-r from-slate-700 to-slate-900 text-white shadow-lg'
-                  : 'text-slate-700 hover:bg-slate-100'
-              }`}
+                  ? 'bg-gradient-to-r from-slate-700 to-slate-900 text-white shadow-lg scale-105'
+                  : 'text-slate-700 hover:bg-gradient-to-r hover:from-slate-700 hover:to-slate-900 hover:text-white hover:shadow-lg hover:scale-105 active:scale-95'
+              } dark:text-slate-300 dark:hover:from-slate-600 dark:hover:to-slate-800`}
             >
               {item.name}
             </button>
           ))}
           <button
             onClick={() => {
+              setIsNotificationsOpen(true)
+              setIsMenuOpen(false)
+            }}
+            className="relative w-full text-left px-3 py-2 rounded-md text-base font-medium transition-colors duration-200 text-slate-700 hover:bg-slate-100 flex items-center gap-2 dark:text-slate-300 dark:hover:bg-slate-700"
+            style={{ colorScheme: 'light dark' }}
+          >
+            <svg 
+              className="h-5 w-5 transition-colors" 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+              style={{ color: 'inherit' }}
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+            </svg>
+            Notifications
+            {unreadCount > 0 && (
+              <span className="ml-auto h-5 w-5 rounded-full bg-red-500 text-white text-xs font-bold flex items-center justify-center animate-pulse">
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            )}
+          </button>
+          <button
+            onClick={() => {
               handleSignOut()
               setIsMenuOpen(false)
             }}
-            className="block w-full text-left px-3 py-2 rounded-md text-base font-medium bg-red-600 text-white hover:bg-red-700 transition-colors duration-200"
+            className="block w-full text-left px-3 py-2 rounded-md text-base font-medium bg-gradient-to-r from-red-600 to-red-700 text-white hover:from-red-500 hover:to-red-600 hover:shadow-lg transform hover:scale-105 active:scale-95 transition-all duration-300 ease-in-out"
           >
             Sign Out
           </button>
         </div>
       </div>
+
+      {/* Notifications panel */}
+      {userData && (
+        <NotificationPanel
+          userId={userData.id}
+          isOpen={isNotificationsOpen}
+          onClose={() => setIsNotificationsOpen(false)}
+        />
+      )}
     </nav>
   )
 }
 
-export default Navbar 
+export default Navbar

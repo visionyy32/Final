@@ -448,6 +448,18 @@ const Home = ({ userData }) => {
           >
             Profile
           </button>
+          <button
+            onClick={() => {
+              window.location.href = '/history'
+            }}
+            className={`px-6 py-3 rounded-md font-medium transition-colors ${
+              activeTab === 'history'
+                ? 'bg-gradient-to-r from-slate-700 to-slate-900 text-white shadow-lg'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            Order History
+          </button>
         </div>
       </div>
 
@@ -769,4 +781,4 @@ const Home = ({ userData }) => {
   )
 }
 
-export default Home 
+export default Home

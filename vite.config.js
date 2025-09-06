@@ -5,13 +5,25 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   server: {
+    port: 3000,
+    open: true,
+    proxy: {},
     historyApiFallback: true,
   },
   build: {
+    outDir: 'dist',
     rollupOptions: {
       output: {
         manualChunks: undefined,
       },
+    },
+  },
+  // Ensures proper client-side routing
+  preview: {
+    historyApiFallback: {
+      rewrites: [
+        { from: /^\/.*$/, to: '/index.html' },
+      ],
     },
   },
 })
