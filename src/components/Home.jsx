@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import ParcelPlacementForm from './ParcelPlacementForm'
 import Profile from './Profile'
-import { parcelService } from '../services/supabaseService'
+import { parcelService, notificationService } from '../services/supabaseService'
 import { supabase } from '../lib/supabase'
 
 const Home = ({ userData }) => {
@@ -209,12 +209,14 @@ const Home = ({ userData }) => {
       const parcelToSave = {
         tracking_number: parcelData.trackingNumber,
         user_id: userData.id,
-        sender_name: userData.name || 'Unknown User',
+        sender_name: parcelData.senderName || userData.name || 'Unknown User',
+        sender_email: parcelData.senderEmail || userData.email || '',
         sender_address: parcelData.senderAddress || '',
         sender_county: parcelData.senderCounty || '',
         sender_phone: parcelData.senderPhone || '',
         sender_commuter: parcelData.senderCommuter || '',
         recipient_name: parcelData.recipientName || '',
+        recipient_email: parcelData.recipientEmail || '',
         recipient_address: parcelData.recipientAddress || '',
         recipient_county: parcelData.recipientCounty || '',
         recipient_phone: parcelData.recipientPhone || '',
@@ -224,11 +226,15 @@ const Home = ({ userData }) => {
         parcel_width: parcelData.parcelDimensions ? parseFloat(parcelData.parcelDimensions.split('x')[1]) || null : null,
         parcel_height: parcelData.parcelDimensions ? parseFloat(parcelData.parcelDimensions.split('x')[2]) || null : null,
         special_instructions: parcelData.specialInstructions || '',
-        status: 'Pending Pickup',
+        status: parcelData.status || 'Pending Pickup',
         cost: cost,
         estimated_delivery: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 7 days from now
         current_location: parcelData.senderCounty || '',
-        destination: parcelData.recipientCounty || ''
+        destination: parcelData.recipientCounty || '',
+        // Add payment-related fields
+        total_cost: parcelData.total_cost || cost,
+        payment_method: parcelData.payment_method || 'pay_on_delivery',
+        payment_status: parcelData.payment_status || 'pending'
       }
 
       // Save to Supabase
@@ -245,7 +251,7 @@ const Home = ({ userData }) => {
         id: data?.id || Date.now(),
         tracking_number: parcelData.trackingNumber,
         user_id: userData.id,
-        sender_name: userData.name || 'Unknown User',
+        sender_name: parcelData.senderName || userData.name || 'Unknown User',
         sender_address: parcelData.senderAddress,
         sender_county: parcelData.senderCounty,
         sender_phone: parcelData.senderPhone,
@@ -274,6 +280,25 @@ const Home = ({ userData }) => {
       // Switch to track tab to show the new parcel
       setActiveTab('track')
 
+      // Create notification for successful parcel placement
+      try {
+        await notificationService.createNotification({
+          user_id: userData.id,
+          title: 'Parcel Placed Successfully! 📦',
+          message: `Your parcel has been submitted for delivery. Tracking Number: ${parcelData.trackingNumber}`,
+          type: 'success',
+          metadata: {
+            tracking_number: parcelData.trackingNumber,
+            parcel_id: data?.id,
+            action: 'parcel_placed'
+          }
+        })
+        console.log('Notification created for parcel placement')
+      } catch (notifError) {
+        console.error('Error creating notification:', notifError)
+        // Don't fail the entire process if notification fails
+      }
+
       // Force refresh parcels from database to ensure consistency
       setTimeout(async () => {
         try {
@@ -290,9 +315,13 @@ const Home = ({ userData }) => {
 
       // Show success message with tracking number
       alert(`Parcel submitted successfully! Your tracking number is: ${parcelData.trackingNumber}`)
+      
+      // Return the saved parcel data for payment flow
+      return data
     } catch (error) {
       console.error('Error submitting parcel:', error)
       alert(`Error submitting parcel: ${error.message || 'Please try again.'}`)
+      throw error // Re-throw so payment flow can handle the error
     }
   }
 
@@ -680,13 +709,7 @@ const Home = ({ userData }) => {
             <div className="mt-8 bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow">
               <h2 className="text-2xl font-bold text-slate-900 mb-4">Calculate Shipping Cost</h2>
               <div className="space-y-4">
-                <button
-                  onClick={handleCostCalculation}
-                  disabled={isCalculating}
-                  className="w-full bg-emerald-600 text-white py-3 px-4 rounded-md hover:bg-emerald-700 transition-colors disabled:opacity-50"
-                >
-                  {isCalculating ? 'Calculating...' : 'Calculate Cost'}
-                </button>
+                {/* Calculate Cost button removed as requested */}
 
                 {costEstimate && (
                   <div className="bg-slate-50 rounded-lg p-4">

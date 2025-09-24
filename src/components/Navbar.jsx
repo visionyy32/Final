@@ -12,7 +12,6 @@ const Navbar = ({ currentPage, setCurrentPage, onSignOut }) => {
   const navItems = [
     { name: 'Home', page: 'home' },
     { name: 'Track Parcel', page: 'tracking' },
-    { name: 'About Us', page: 'about' },
     { name: 'Contact Us', page: 'contact' },
     { name: 'FAQ', page: 'faq' }
   ]

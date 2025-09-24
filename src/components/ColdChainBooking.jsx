@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { specialDeliveryService } from '../services/specialDeliveryService'
+import { quotesService } from '../services/quotesService'
 
 const ColdChainBooking = ({ isOpen, onClose, onSuccess }) => {
   const [formData, setFormData] = useState({
@@ -142,12 +142,12 @@ const ColdChainBooking = ({ isOpen, onClose, onSuccess }) => {
     setIsSubmitting(true)
 
     try {
-      const orderData = {
+      const quoteData = {
         serviceType: 'cold_chain',
         shipmentType: formData.shipmentType,
+        description: formData.description,
         productDescription: formData.description,
         weight: parseFloat(formData.weight),
-        distance: parseFloat(formData.distance),
         temperatureType: formData.temperatureType,
         pickupLocation: formData.pickupLocation,
         deliveryLocation: formData.deliveryLocation,
@@ -158,13 +158,14 @@ const ColdChainBooking = ({ isOpen, onClose, onSuccess }) => {
         recipientPhone: formData.recipientPhone,
         urgency: formData.urgency,
         specialInstructions: `Cold Chain - ${temperatureTypes.find(t => t.value === formData.temperatureType)?.label}`,
-        totalCost: pricing.totalCost
+        totalCost: pricing.totalCost,
+        pickupDate: new Date().toISOString().split('T')[0] // Today's date
       }
 
-      const result = await specialDeliveryService.createOrder(orderData)
+      const result = await quotesService.createQuote(quoteData)
       
       if (result.success) {
-        onSuccess(result.data, result.orderNumber, result.isGuest)
+        onSuccess(result.data, result.quoteNumber, result.isGuest)
         onClose()
         // Reset form
         setFormData({

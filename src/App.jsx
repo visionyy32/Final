@@ -432,6 +432,10 @@ function App() {
           localStorage.removeItem(`userRole_${userData.id}`)
         }
         
+        // Clear dispatcher locks
+        localStorage.removeItem('dispatcherLock')
+        sessionStorage.removeItem('activeRole')
+        
         // User signed out - batch update immediately
         const signOutBatch = () => {
           setIsAuthenticated(false)
@@ -613,32 +617,44 @@ function App() {
 
   const handleSignOut = async () => {
     try {
-      // Clear cached role data before signing out
-      if (userData?.id) {
-        localStorage.removeItem(`userRole_${userData.id}`);
-      }
+      console.log('🚪 Starting sign out process (preserving session data)...')
       
-      // Clear session storage for role persistence
-      sessionStorage.removeItem('activeRole');
+      // Clear dispatcher locks temporarily (but preserve session data for easy re-login)
+      console.log('🔓 Temporarily clearing dispatcher locks...')
+      localStorage.removeItem('dispatcherLock')
+      sessionStorage.removeItem('activeRole') // Clear the active role on sign out
+      
+      // Keep cached role data for faster re-login
+      // if (userData?.id) {
+      //   localStorage.removeItem(`userRole_${userData.id}`);
+      //   console.log('🗑️ Cleared user role cache for:', userData.id)
+      // }
+      console.log('💾 Preserving user role cache and session data for faster re-login')
       
       // Clear current page 
       clearCurrentPage();
+      console.log('🗑️ Cleared current page')
       
+      // Clear Supabase session
       const { error } = await authService.signOut();
       if (error) {
-        console.error('Sign out error:', error);
+        console.error('❌ Sign out error:', error);
+      } else {
+        console.log('✅ Successfully signed out from Supabase')
       }
+      
+      // Reset app state but preserve session data
+      setIsAuthenticated(false)
+      setUserRole(null)
+      setUserData(null)
+      setCurrentPage('landing')
+      
+      console.log('🔄 Reset app state - redirecting to landing page (session data preserved)')
+      
     } catch (error) {
-      console.error('Sign out error:', error);
+      console.error('❌ Sign out error:', error);
     }
-
-    setIsAuthenticated(false);
-    setUserRole(null);
-    setUserData(null);
-    navigateToPage('landing');
-    setIsLoading(false);
-    alert('You have been signed out successfully.');
-  }
+  };
 
   // Force admin state synchronously to prevent any intermediate renders
   useLayoutEffect(() => {

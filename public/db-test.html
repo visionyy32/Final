@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database Test</title>
+</head>
+<body>
+    <h1>Database Structure Test</h1>
+    <button onclick="testDatabase()">Test Database Connection</button>
+    <pre id="results"></pre>
+
+    <script type="module">
+        import { createClient } from 'https://cdn.skypack.dev/@supabase/supabase-js@2'
+        
+        const supabaseUrl = 'https://oolpgcwdmwlkvaxsicfb.supabase.co'
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9vbHBnY3dkbXdsa3ZheHNpY2ZiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzY5NDE1NzcsImV4cCI6MjA1MjUxNzU3N30.BSrTiPNGJKMWpY6L2mhRvfLy0cgzNvyUZQl-sGCXayM'
+        const supabase = createClient(supabaseUrl, supabaseKey)
+
+        window.testDatabase = async function() {
+            const results = document.getElementById('results');
+            results.textContent = 'Testing database...\n';
+            
+            try {
+                // Check parcels table structure
+                const { data: parcels, error: parcelsError } = await supabase
+                    .from('parcels')
+                    .select('*')
+                    .limit(5);
+                
+                if (parcelsError) {
+                    results.textContent += `Parcels error: ${JSON.stringify(parcelsError, null, 2)}\n`;
+                } else {
+                    results.textContent += `Parcels (${parcels.length} records):\n`;
+                    parcels.forEach(parcel => {
+                        results.textContent += `ID: ${parcel.id} (type: ${typeof parcel.id})\n`;
+                        results.textContent += `Has total_cost: ${parcel.total_cost !== undefined}\n`;
+                        results.textContent += `Has payment_method: ${parcel.payment_method !== undefined}\n`;
+                        results.textContent += `---\n`;
+                    });
+                }
+
+                // Test if payment_transactions table exists
+                const { data: transactions, error: transError } = await supabase
+                    .from('payment_transactions')
+                    .select('*')
+                    .limit(1);
+                
+                if (transError) {
+                    results.textContent += `Payment transactions error: ${JSON.stringify(transError, null, 2)}\n`;
+                } else {
+                    results.textContent += `Payment transactions table exists\n`;
+                }
+                
+            } catch (error) {
+                results.textContent += `Test error: ${error.message}\n`;
+            }
+        }
+    </script>
+</body>
+</html>

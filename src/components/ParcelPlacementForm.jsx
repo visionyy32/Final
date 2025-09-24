@@ -1,9 +1,11 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import PaymentModal from './PaymentModal'
 
 const ParcelPlacementForm = ({ onSubmit }) => {
   const [formData, setFormData] = useState({
     // Sender Information
     senderName: '',
+    senderEmail: '',
     senderAddress: '',
     senderCounty: '',
     senderPhone: '',
@@ -11,6 +13,7 @@ const ParcelPlacementForm = ({ onSubmit }) => {
     
     // Recipient Information
     recipientName: '',
+    recipientEmail: '',
     recipientAddress: '',
     recipientCounty: '',
     recipientPhone: '',
@@ -19,11 +22,20 @@ const ParcelPlacementForm = ({ onSubmit }) => {
     parcelDescription: '',
     parcelWeight: '',
     parcelDimensions: '',
-    specialInstructions: ''
+    specialInstructions: '',
+    
+    // Payment Information
+    paymentMethod: 'pay_on_delivery'
   })
 
   const [showConfirmation, setShowConfirmation] = useState(false)
   const [calculatedCost, setCalculatedCost] = useState(0)
+  const [showPaymentModal, setShowPaymentModal] = useState(false)
+
+  // Debug useEffect to track payment modal state changes
+  useEffect(() => {
+    console.log('🔄 Payment modal state changed:', showPaymentModal);
+  }, [showPaymentModal]);
 
   const counties = [
     'Mombasa', 'Kwale', 'Kilifi', 'Tana River', 'Lamu', 'Taita Taveta', 'Garissa', 'Wajir', 'Mandera',
@@ -99,7 +111,7 @@ const ParcelPlacementForm = ({ onSubmit }) => {
     }))
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     
     // Validate required fields
@@ -123,7 +135,10 @@ const ParcelPlacementForm = ({ onSubmit }) => {
     setShowConfirmation(true)
   }
 
-  const handleConfirmOrder = () => {
+  const handleConfirmOrder = async () => {
+    console.log('🔍 Payment method selected:', formData.paymentMethod);
+    console.log('🔍 Should open payment modal:', formData.paymentMethod === 'pay_now');
+    
     // Generate unique tracking number with exactly 8 digits
     const randomDigits = Math.floor(Math.random() * 90000000) + 10000000 // Generates 8-digit number (10000000-99999999)
     const trackingNumber = `TRK${randomDigits}`
@@ -131,33 +146,85 @@ const ParcelPlacementForm = ({ onSubmit }) => {
     const parcelData = {
       ...formData,
       trackingNumber: trackingNumber,
-      status: 'Pending Pickup',
+      status: 'Pending Pickup', // Use allowed database status value
       dateCreated: new Date().toISOString(),
-      id: Date.now(),
-      shippingCost: calculatedCost
+      // Remove manual ID generation - let Supabase auto-generate UUID
+      shippingCost: calculatedCost,
+      total_cost: calculatedCost,
+      payment_method: formData.paymentMethod,
+      payment_status: formData.paymentMethod === 'pay_now' ? 'pending' : 'pending',
+      type: 'regular'
     }
 
-    onSubmit(parcelData)
-    
+    if (formData.paymentMethod === 'pay_now') {
+      // For "Pay Now", save the parcel first to get the UUID, then initiate payment
+      try {
+        console.log('🔄 Attempting to save parcel for payment...', parcelData);
+        const savedParcel = await onSubmit(parcelData)
+        console.log('💾 Parcel save result:', savedParcel);
+        
+        if (savedParcel && savedParcel.id) {
+          // Now we have the real parcel ID from database
+          console.log('✅ Parcel saved successfully, opening payment modal');
+          window.tempParcelData = savedParcel
+          // Close confirmation modal first, then open payment modal
+          setShowConfirmation(false)
+          // Use setTimeout to ensure the confirmation modal closes before opening payment modal
+          setTimeout(() => {
+            console.log('🔄 Setting showPaymentModal to true');
+            setShowPaymentModal(true)
+            console.log('🔄 Payment modal should be open now');
+          }, 100)
+        } else {
+          console.error('❌ Parcel save failed - no ID returned');
+          alert('Failed to save parcel. Please try again.')
+        }
+      } catch (error) {
+        console.error('Error saving parcel for payment:', error)
+        setError('Failed to save parcel. Please try again.')
+      }
+    } else {
+      // Submit directly for pay on delivery
+      onSubmit(parcelData)
+      resetForm()
+    }
+  }
+
+  const handlePaymentSuccess = (paymentData) => {
+    console.log('Payment successful:', paymentData)
+    // Parcel is already saved, just reset the form and close modal
+    resetForm()
+    setShowPaymentModal(false)
+    // Clean up temp data
+    if (window.tempParcelData) {
+      delete window.tempParcelData
+    }
+  }
+
+  const resetForm = () => {
     // Reset form
     setFormData({
       senderName: '',
+      senderEmail: '',
       senderAddress: '',
       senderCounty: '',
       senderPhone: '',
       senderCommuter: '',
       recipientName: '',
+      recipientEmail: '',
       recipientAddress: '',
       recipientCounty: '',
       recipientPhone: '',
       parcelDescription: '',
       parcelWeight: '',
       parcelDimensions: '',
-      specialInstructions: ''
+      specialInstructions: '',
+      paymentMethod: 'pay_on_delivery'
     })
     
     setShowConfirmation(false)
     setCalculatedCost(0)
+    delete window.tempParcelData
   }
 
   const handleCancelOrder = () => {
@@ -186,6 +253,20 @@ const ParcelPlacementForm = ({ onSubmit }) => {
                 required
                 className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Enter sender's full name"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Email Address
+              </label>
+              <input
+                type="email"
+                name="senderEmail"
+                value={formData.senderEmail}
+                onChange={handleInputChange}
+                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="sender@example.com"
               />
             </div>
             
@@ -273,6 +354,20 @@ const ParcelPlacementForm = ({ onSubmit }) => {
                 required
                 className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
                 placeholder="Enter recipient's full name"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Email Address
+              </label>
+              <input
+                type="email"
+                name="recipientEmail"
+                value={formData.recipientEmail}
+                onChange={handleInputChange}
+                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                placeholder="recipient@example.com"
               />
             </div>
             
@@ -392,13 +487,52 @@ const ParcelPlacementForm = ({ onSubmit }) => {
           </div>
         </div>
 
+        {/* Payment Method Selection */}
+        <div className="bg-green-50 p-6 rounded-lg shadow-lg border-2 border-green-300">
+          <h3 className="text-xl font-bold text-green-800 mb-4">💳 Choose Payment Method</h3>
+          <div className="space-y-3">
+            <div className="flex items-center">
+              <input
+                type="radio"
+                id="pay_on_delivery"
+                name="paymentMethod"
+                value="pay_on_delivery"
+                checked={formData.paymentMethod === 'pay_on_delivery'}
+                onChange={handleInputChange}
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+              />
+              <label htmlFor="pay_on_delivery" className="ml-3 block text-sm font-medium text-gray-700">
+                <span className="font-semibold">Pay on Delivery</span>
+                <p className="text-gray-500 text-xs mt-1">Pay when the parcel is delivered to you via M-Pesa</p>
+              </label>
+            </div>
+            
+            <div className="flex items-center">
+              <input
+                type="radio"
+                id="pay_now"
+                name="paymentMethod"
+                value="pay_now"
+                checked={formData.paymentMethod === 'pay_now'}
+                onChange={handleInputChange}
+                className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300"
+              />
+              <label htmlFor="pay_now" className="ml-3 block text-sm font-medium text-gray-700">
+                <span className="font-semibold text-green-600">Pay Now (M-Pesa) 📱</span>
+                <p className="text-green-600 text-xs mt-1">You'll enter your M-Pesa phone number after placing the order</p>
+                <p className="text-gray-500 text-xs">Pay immediately and get priority processing</p>
+              </label>
+            </div>
+          </div>
+        </div>
+
         {/* Submit Button */}
         <div className="text-center">
           <button
             type="submit"
             className="bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors text-lg"
           >
-            Calculate Cost & Create Order
+            Create Order
           </button>
         </div>
       </form>
@@ -414,22 +548,31 @@ const ParcelPlacementForm = ({ onSubmit }) => {
                   <p className="text-2xl font-bold text-blue-600">
                     KES {calculatedCost.toLocaleString()}
                   </p>
-                  <p className="text-sm text-blue-600 mt-1">Total shipping cost</p>
                 </div>
                 <div className="text-sm text-gray-600 space-y-1">
                   <p>• Weight: {formData.parcelWeight} kg</p>
                   <p>• From: {formData.senderCounty}</p>
                   <p>• To: {formData.recipientCounty}</p>
                   <p>• Commuter: {formData.senderCommuter}</p>
+                  <p>• Payment: <span className="font-semibold">{formData.paymentMethod === 'pay_now' ? 'Pay Now (M-Pesa)' : 'Pay on Delivery'}</span></p>
                 </div>
               </div>
               
-              <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4 mb-6">
-                <p className="text-sm text-yellow-800">
-                  <strong>Note:</strong> Payment will be collected upon parcel pickup or delivery. 
-                  This order creates a booking for your parcel shipment.
-                </p>
-              </div>
+              {formData.paymentMethod === 'pay_now' ? (
+                <div className="bg-green-50 border border-green-200 rounded-md p-4 mb-6">
+                  <p className="text-sm text-green-800">
+                    <strong>📱 M-Pesa Payment:</strong> After confirming, you'll enter your M-Pesa phone number 
+                    and receive an STK push notification to complete payment.
+                  </p>
+                </div>
+              ) : (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4 mb-6">
+                  <p className="text-sm text-yellow-800">
+                    <strong>Note:</strong> Payment will be collected upon parcel pickup or delivery. 
+                    This order creates a booking for your parcel shipment.
+                  </p>
+                </div>
+              )}
 
               <div className="flex space-x-3">
                 <button
@@ -449,6 +592,20 @@ const ParcelPlacementForm = ({ onSubmit }) => {
           </div>
         </div>
       )}
+
+      {/* Always render PaymentModal - it handles its own visibility */}
+      {console.log('🎯 About to render PaymentModal - showPaymentModal:', showPaymentModal, 'parcelData exists:', !!window.tempParcelData)}
+      <PaymentModal
+        isOpen={showPaymentModal}
+        onClose={() => {
+          console.log('🔒 Closing payment modal');
+          setShowPaymentModal(false)
+          delete window.tempParcelData
+        }}
+        parcel={window.tempParcelData}
+        onPaymentSuccess={handlePaymentSuccess}
+        initiatedBy="customer"
+      />
     </div>
   )
 }

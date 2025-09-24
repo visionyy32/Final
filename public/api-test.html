@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API Connection Test</title>
+</head>
+<body>
+    <h1>M-Pesa API Connection Test</h1>
+    <button onclick="testConnection()">Test Connection</button>
+    <div id="result"></div>
+
+    <script>
+        async function testConnection() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = 'Testing connection...';
+            
+            try {
+                const response = await fetch('http://localhost:3003/api/health');
+                const data = await response.json();
+                resultDiv.innerHTML = `
+                    <h3>✅ Connection Successful!</h3>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <h3>❌ Connection Failed!</h3>
+                    <p>Error: ${error.message}</p>
+                    <p>This could be due to:</p>
+                    <ul>
+                        <li>Backend server not running</li>
+                        <li>CORS issues</li>
+                        <li>Wrong port number</li>
+                    </ul>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

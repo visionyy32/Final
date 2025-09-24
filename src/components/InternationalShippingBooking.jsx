@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { specialDeliveryService } from '../services/specialDeliveryService'
+import { quotesService } from '../services/quotesService'
 
 const InternationalShippingBooking = ({ isOpen, onClose, onSuccess }) => {
   const [formData, setFormData] = useState({
@@ -194,17 +194,16 @@ const InternationalShippingBooking = ({ isOpen, onClose, onSuccess }) => {
     setIsSubmitting(true)
 
     try {
-      const orderData = {
+      const quoteData = {
         serviceType: 'international_shipping',
-        cargoType: formData.cargoType,
-        productType: formData.cargoType === 'hard_cargo' ? 'other' : 'electronics', // Map to valid product_type values
+        shipmentType: formData.cargoType,
+        description: formData.description,
         productDescription: formData.description,
-        fragility: 'normal', // Default fragility level for international shipping
         weight: parseFloat(formData.weight),
-        distance: parseFloat(formData.distance),
-        transportMethod: formData.transportMethod,
         originCountry: formData.originCountry,
         destinationCountry: formData.destinationCountry,
+        senderCountry: formData.originCountry,
+        recipientCountry: formData.destinationCountry,
         pickupLocation: formData.pickupLocation,
         deliveryLocation: formData.deliveryLocation,
         senderName: formData.senderName,
@@ -213,19 +212,18 @@ const InternationalShippingBooking = ({ isOpen, onClose, onSuccess }) => {
         recipientName: formData.recipientName,
         recipientPhone: formData.recipientPhone,
         urgency: formData.urgency,
-        customsValue: parseFloat(formData.customsValue),
+        declaredValue: parseFloat(formData.customsValue),
+        customsDeclaration: formData.description,
         specialInstructions: formData.specialInstructions,
         totalCost: pricing.totalCost,
-        // Pricing breakdown for storage
-        cargoRate: pricing.cargoRate,
-        distanceRate: pricing.distanceRate,
-        transportMultiplier: pricing.transportMultiplier
+        pickupDate: new Date().toISOString().split('T')[0], // Today's date
+        isCommercial: parseFloat(formData.customsValue) > 10000 // Assume commercial if value > 10k
       }
 
-      const result = await specialDeliveryService.createOrder(orderData)
+      const result = await quotesService.createQuote(quoteData)
       
       if (result.success) {
-        onSuccess(result.data, result.orderNumber, result.isGuest)
+        onSuccess(result.data, result.quoteNumber, result.isGuest)
         onClose()
         // Reset form
         setFormData({

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { parcelService, userService } from '../services/supabaseService'
+import PaymentModal from './PaymentModal'
 
 const DispatcherDashboard = ({ onSignOut }) => {
   const [activeTab, setActiveTab] = useState('available') // Default to available parcels
@@ -11,12 +12,78 @@ const DispatcherDashboard = ({ onSignOut }) => {
   const [selectedParcel, setSelectedParcel] = useState(null)
   const [statusUpdate, setStatusUpdate] = useState('')
   const [locationUpdate, setLocationUpdate] = useState('')
+  const [showPaymentModal, setShowPaymentModal] = useState(false)
+  const [paymentParcel, setPaymentParcel] = useState(null)
 
   console.log('DispatcherDashboard rendered:', { activeTab, parcels: parcels.length, users: users.length, loading, error })
 
-  // Load data on component mount
+  // Enhanced sign out handler with confirmation
+  const handleSignOut = () => {
+    const confirmed = window.confirm(
+      '🚪 Sign Out Confirmation\n\n' +
+      'Are you sure you want to sign out from the Dispatcher Dashboard?\n\n' +
+      'This will:\n' +
+      '• End your current session\n' +
+      '• Return you to the landing page\n' +
+      '• Keep your session data for easier re-login\n\n' +
+      'You can sign back in quickly with your saved credentials.'
+    )
+    
+    if (confirmed) {
+      console.log('🚪 Dispatcher confirmed sign out (session data preserved)')
+      onSignOut()
+    } else {
+      console.log('🚫 Dispatcher cancelled sign out')
+    }
+  }
+
+  // Handle payment collection
+  const handleCollectPayment = (parcel) => {
+    console.log('Collecting payment for parcel:', parcel)
+    setPaymentParcel({
+      ...parcel,
+      type: 'regular',
+      recipient_phone: parcel.recipient_phone || parcel.recipientPhone
+    })
+    setShowPaymentModal(true)
+  }
+
+  // Handle payment success
+  const handlePaymentSuccess = async (paymentData) => {
+    console.log('Payment collected successfully:', paymentData)
+    
+    try {
+      // Update parcel status to delivered since payment is complete
+      const { error } = await parcelService.updateParcelStatus(paymentParcel.id, 'Delivered')
+      
+      if (error) {
+        console.error('Error updating parcel status after payment:', error)
+        alert('Payment successful but failed to update parcel status. Please refresh and try again.')
+      } else {
+        alert('Payment collected successfully! Parcel marked as delivered.')
+        // Reload data to reflect changes
+        loadData()
+      }
+    } catch (error) {
+      console.error('Error in handlePaymentSuccess:', error)
+      alert('Payment successful but there was an error updating the system. Please refresh.')
+    }
+    
+    setShowPaymentModal(false)
+    setPaymentParcel(null)
+  }
+
+  // Load data on component mount and set up auto-refresh
   useEffect(() => {
     loadData()
+    
+    // Set up auto-refresh every 30 seconds
+    const interval = setInterval(() => {
+      console.log('🔄 Auto-refreshing dispatcher data...')
+      loadData()
+    }, 30000)
+    
+    return () => clearInterval(interval)
   }, [])
 
   // Helper function to get user info for a parcel
@@ -38,7 +105,7 @@ const DispatcherDashboard = ({ onSignOut }) => {
       setLoading(true)
       setError(null)
       
-      console.log('Loading dispatcher dashboard with service role approach...')
+      console.log('🚚 Loading dispatcher dashboard - fetching all parcels...')
       
       // Try multiple approaches to get data
       let parcelsData = []
@@ -49,14 +116,14 @@ const DispatcherDashboard = ({ onSignOut }) => {
         const parcelsResult = await parcelService.getAllParcels()
         if (!parcelsResult.error) {
           parcelsData = parcelsResult.data || []
-          console.log('Service method successful:', parcelsData.length, 'parcels')
+          console.log('✅ Service method successful:', parcelsData.length, 'parcels loaded')
         } else {
           throw new Error(parcelsResult.error.message)
         }
       } catch (serviceError) {
-        console.log('Service method failed, trying direct query...', serviceError.message)
+        console.log('⚠️ Service method failed, trying direct query...', serviceError.message)
         
-        // Approach 2: Direct query with service role
+        // Approach 2: Direct query - enhanced with more fields
         try {
           const { data: directData, error: directError } = await supabase
             .from('parcels')
@@ -75,59 +142,73 @@ const DispatcherDashboard = ({ onSignOut }) => {
               parcel_weight,
               status,
               cost,
+              total_cost,
+              shipping_cost,
+              payment_method,
+              payment_status,
+              mpesa_transaction_id,
               estimated_delivery,
               current_location,
               created_at,
+              updated_at,
               user_id
             `)
             .order('created_at', { ascending: false })
-            .limit(100)
+            .limit(200)
           
           if (directError) {
             throw new Error(directError.message)
           }
           
           parcelsData = directData || []
-          console.log('Direct query successful:', parcelsData.length, 'parcels')
-        } catch (directError) {
-          console.log('Direct query also failed:', directError.message)
+          console.log('✅ Direct query successful:', parcelsData.length, 'parcels loaded')
           
-          // Approach 3: Use stored procedure if available
-          try {
-            const { data: rpcData, error: rpcError } = await supabase.rpc('get_dispatcher_parcels')
-            if (!rpcError) {
-              parcelsData = rpcData || []
-              console.log('RPC successful:', parcelsData.length, 'parcels')
-            } else {
-              throw new Error('All database access methods failed. Please check Supabase policies.')
-            }
-          } catch (rpcError) {
-            throw new Error(`Database access blocked by RLS policies. Error: ${serviceError.message}`)
-          }
+          // Log parcel status distribution for debugging
+          const statusCounts = parcelsData.reduce((acc, parcel) => {
+            const status = parcel.status || 'undefined'
+            acc[status] = (acc[status] || 0) + 1
+            return acc
+          }, {})
+          console.log('📊 Parcel status distribution:', statusCounts)
+          
+        } catch (directError) {
+          console.log('❌ Direct query also failed:', directError.message)
+          throw new Error(`Database access blocked by RLS policies. Error: ${serviceError.message}`)
         }
       }
       
-      // Try to get user data (optional for names resolution)
+      // Load user data for better parcel context
       try {
-        const { data: userData, error: userError } = await supabase
-          .from('users')
-          .select('id, name, email, phone, role')
-          .limit(100)
-        
-        if (!userError) {
-          usersData = userData || []
-          console.log('Users loaded:', usersData.length)
+        const usersResult = await userService.getAllUsers()
+        if (!usersResult.error) {
+          usersData = usersResult.data || []
+          console.log('✅ Users loaded via service:', usersData.length)
         } else {
-          console.warn('Could not load users:', userError.message)
+          // Fallback to direct query
+          const { data: userData, error: userError } = await supabase
+            .from('users')
+            .select('id, name, email, phone, role')
+            .limit(100)
+          
+          if (!userError) {
+            usersData = userData || []
+            console.log('✅ Users loaded via direct query:', usersData.length)
+          } else {
+            console.warn('⚠️ Could not load users:', userError.message)
+          }
         }
       } catch (userError) {
-        console.warn('Users query failed, continuing without user data')
+        console.warn('⚠️ Users query failed, continuing without user data:', userError.message)
       }
       
       setParcels(parcelsData)
       setUsers(usersData)
       
-      console.log('Dashboard data loaded successfully')
+      console.log('🎉 Dispatcher dashboard data loaded successfully!')
+      console.log('📦 Total parcels:', parcelsData.length)
+      console.log('👥 Total users:', usersData.length)
+      console.log('🟢 Available parcels:', parcelsData.filter(p => p.status === 'Pending Pickup' || !p.status).length)
+      console.log('🔵 Active parcels:', parcelsData.filter(p => p.status === 'In Transit').length)
       
     } catch (error) {
       console.error('All data loading approaches failed:', error)
@@ -210,12 +291,11 @@ Or use the Table Editor to turn off RLS on the parcels table.`)
   }
 
   const getStatusColor = (status) => {
-    switch (status?.toLowerCase()) {
-      case 'pending': return 'bg-yellow-100 text-yellow-800'
-      case 'picked_up': return 'bg-blue-100 text-blue-800'
-      case 'in_transit': return 'bg-purple-100 text-purple-800'
-      case 'delivered': return 'bg-green-100 text-green-800'
-      case 'failed': return 'bg-red-100 text-red-800'
+    switch (status) {
+      case 'Pending Pickup': return 'bg-yellow-100 text-yellow-800'
+      case 'In Transit': return 'bg-blue-100 text-blue-800'
+      case 'Delivered': return 'bg-green-100 text-green-800'
+      case 'Cancelled': return 'bg-red-100 text-red-800'
       default: return 'bg-gray-100 text-gray-800'
     }
   }
@@ -245,7 +325,7 @@ Or use the Table Editor to turn off RLS on the parcels table.`)
               Retry Loading Data
             </button>
             <button
-              onClick={onSignOut}
+              onClick={handleSignOut}
               className="w-full bg-slate-600 text-white px-4 py-2 rounded-md hover:bg-slate-700"
             >
               Sign Out
@@ -271,15 +351,36 @@ Or use the Table Editor to turn off RLS on the parcels table.`)
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-slate-900">TrackFlow Dispatcher</h1>
-                <p className="text-slate-600">Manage parcels and logistics</p>
+                <p className="text-slate-600">Manage parcels and logistics • {parcels.length} total parcels</p>
               </div>
             </div>
-            <button
-              onClick={onSignOut}
-              className="bg-gradient-to-r from-slate-600 to-slate-800 text-white px-6 py-2 rounded-xl font-medium hover:from-slate-700 hover:to-slate-900 transition-all duration-300 shadow-lg hover:shadow-xl"
-            >
-              Sign Out
-            </button>
+            <div className="flex items-center space-x-3">
+              <button
+                onClick={loadData}
+                disabled={loading}
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+              >
+                {loading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    <span>Loading...</span>
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    <span>Refresh</span>
+                  </>
+                )}
+              </button>
+              <button
+                onClick={handleSignOut}
+                className="bg-gradient-to-r from-slate-600 to-slate-800 text-white px-6 py-2 rounded-xl font-medium hover:from-slate-700 hover:to-slate-900 transition-all duration-300 shadow-lg hover:shadow-xl"
+              >
+                Sign Out
+              </button>
+            </div>
           </div>
         </div>
       </header>
@@ -335,7 +436,7 @@ Or use the Table Editor to turn off RLS on the parcels table.`)
               <div className="bg-white rounded-xl p-6 shadow-lg border border-slate-200">
                 <h3 className="text-sm font-medium text-slate-600">Pending Pickup</h3>
                 <p className="text-3xl font-bold text-yellow-600 mt-2">
-                  {parcels.filter(p => p.status === 'Pending Pickup' || p.status === 'pending').length}
+                  {parcels.filter(p => p.status === 'Pending Pickup').length}
                 </p>
                 <p className="text-xs text-slate-500 mt-1">Awaiting collection</p>
               </div>
@@ -465,21 +566,21 @@ Or use the Table Editor to turn off RLS on the parcels table.`)
               <div className="bg-white rounded-xl p-6 shadow-lg border border-slate-200">
                 <h3 className="text-sm font-medium text-slate-600">Picked Up</h3>
                 <p className="text-3xl font-bold text-blue-600 mt-2">
-                  {parcels.filter(p => p.status === 'picked_up').length}
+                  {parcels.filter(p => p.status === 'In Transit').length}
                 </p>
                 <p className="text-xs text-slate-500 mt-1">Collected</p>
               </div>
               <div className="bg-white rounded-xl p-6 shadow-lg border border-slate-200">
                 <h3 className="text-sm font-medium text-slate-600">In Transit</h3>
                 <p className="text-3xl font-bold text-orange-600 mt-2">
-                  {parcels.filter(p => p.status === 'In Transit' || p.status === 'in_transit').length}
+                  {parcels.filter(p => p.status === 'In Transit').length}
                 </p>
                 <p className="text-xs text-slate-500 mt-1">On the way</p>
               </div>
               <div className="bg-white rounded-xl p-6 shadow-lg border border-slate-200">
                 <h3 className="text-sm font-medium text-slate-600">Delivered</h3>
                 <p className="text-3xl font-bold text-green-600 mt-2">
-                  {parcels.filter(p => p.status === 'Delivered' || p.status === 'delivered').length}
+                  {parcels.filter(p => p.status === 'Delivered').length}
                 </p>
                 <p className="text-xs text-slate-500 mt-1">Completed</p>
               </div>
@@ -571,12 +672,31 @@ Or use the Table Editor to turn off RLS on the parcels table.`)
                           </span>
                         </td>
                         <td className="px-6 py-4 text-right">
-                          <button
-                            onClick={() => setSelectedParcel(parcel)}
-                            className="text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-3 py-1 rounded-lg transition-colors text-xs"
-                          >
-                            Update
-                          </button>
+                          <div className="flex flex-col space-y-1">
+                            <button
+                              onClick={() => setSelectedParcel(parcel)}
+                              className="text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-3 py-1 rounded-lg transition-colors text-xs"
+                            >
+                              Update
+                            </button>
+                            {/* Show collect payment button for pay on delivery parcels */}
+                            {(parcel.payment_method === 'pay_on_delivery' || !parcel.payment_method) && 
+                             (parcel.payment_status === 'pending' || !parcel.payment_status) && (
+                              <button
+                                onClick={() => handleCollectPayment(parcel)}
+                                className="text-white bg-green-600 hover:bg-green-700 px-3 py-1 rounded-lg transition-colors text-xs font-medium"
+                                title={`Collect KSh ${parcel.total_cost || parcel.shippingCost || 0} via M-Pesa`}
+                              >
+                                Collect Payment
+                              </button>
+                            )}
+                            {/* Show payment status for paid parcels */}
+                            {parcel.payment_status === 'completed' && (
+                              <span className="text-green-600 text-xs font-medium px-2 py-1 bg-green-50 rounded">
+                                ✓ Paid
+                              </span>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     )})}
@@ -638,11 +758,10 @@ Or use the Table Editor to turn off RLS on the parcels table.`)
                   className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-slate-500"
                 >
                   <option value="">Select status</option>
-                  <option value="pending">Pending</option>
-                  <option value="picked_up">Picked Up</option>
-                  <option value="in_transit">In Transit</option>
-                  <option value="delivered">Delivered</option>
-                  <option value="failed">Failed</option>
+                  <option value="Pending Pickup">Pending Pickup</option>
+                  <option value="In Transit">In Transit</option>
+                  <option value="Delivered">Delivered</option>
+                  <option value="Cancelled">Cancelled</option>
                 </select>
               </div>
               
@@ -679,6 +798,18 @@ Or use the Table Editor to turn off RLS on the parcels table.`)
           </div>
         </div>
       )}
+
+      {/* Payment Collection Modal */}
+      <PaymentModal
+        isOpen={showPaymentModal}
+        onClose={() => {
+          setShowPaymentModal(false)
+          setPaymentParcel(null)
+        }}
+        parcel={paymentParcel}
+        onPaymentSuccess={handlePaymentSuccess}
+        initiatedBy="dispatcher"
+      />
     </div>
   )
   } catch (renderError) {
@@ -689,7 +820,7 @@ Or use the Table Editor to turn off RLS on the parcels table.`)
           <h3 className="text-lg font-semibold text-red-800 mb-2">Render Error</h3>
           <p className="text-red-700 mb-4">Something went wrong rendering the dashboard.</p>
           <button
-            onClick={onSignOut}
+            onClick={handleSignOut}
             className="w-full bg-slate-600 text-white px-4 py-2 rounded-md hover:bg-slate-700"
           >
             Sign Out

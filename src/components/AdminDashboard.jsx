@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { userService, parcelService, supportService, chatService, adminLogService } from '../services/supabaseService'
 import { specialDeliveryService } from '../services/specialDeliveryService'
+import { quotesService } from '../services/quotesService'
 import { supabase } from '../lib/supabase'
 
 const AdminDashboard = ({ onSignOut }) => {
@@ -29,6 +30,7 @@ const AdminDashboard = ({ onSignOut }) => {
   const [loadingParcels, setLoadingParcels] = useState(false)
   const [loadingSupport, setLoadingSupport] = useState(false)
   const [loadingChats, setLoadingChats] = useState(false)
+  const [loadingQuotes, setLoadingQuotes] = useState(false)
 
   // Bookings state
   const [specialDeliveryOrders, setSpecialDeliveryOrders] = useState([])
@@ -211,7 +213,28 @@ If you need any immediate assistance, please don't hesitate to call our customer
     }
   }
 
-  // Load bookings data (special delivery orders and quote requests)
+  // Load quotes data
+  const loadQuotesData = async () => {
+    setLoadingQuotes(true)
+    try {
+      // Load quotes from quotes table
+      const quotesResult = await quotesService.getAllQuotes()
+      if (quotesResult.success) {
+        setQuoteRequests(quotesResult.data || [])
+        console.log('Loaded quotes:', quotesResult.data?.length || 0)
+      } else {
+        console.error('Error loading quotes:', quotesResult.error)
+        setQuoteRequests([])
+      }
+    } catch (error) {
+      console.error('Error loading quotes data:', error)
+      setQuoteRequests([])
+    } finally {
+      setLoadingQuotes(false)
+    }
+  }
+
+  // Load bookings data (special delivery orders)
   const loadBookingsData = async () => {
     setLoadingBookings(true)
     try {
@@ -219,27 +242,14 @@ If you need any immediate assistance, please don't hesitate to call our customer
       const ordersResult = await specialDeliveryService.getAllOrders()
       if (ordersResult.success) {
         setSpecialDeliveryOrders(ordersResult.data || [])
+        console.log('Loaded special delivery orders:', ordersResult.data?.length || 0)
       } else {
         console.error('Error loading special delivery orders:', ordersResult.error)
-      }
-
-      // Load support messages that might be quote requests
-      const { data: supportData, error: supportError } = await supportService.getAllSupportMessages()
-      if (supportError) {
-        console.error('Error loading support messages for quotes:', supportError)
-      } else {
-        // Filter messages that might be quote requests
-        const quoteMessages = supportData?.filter(msg => 
-          msg.subject === 'general' || 
-          msg.message?.toLowerCase().includes('quote') ||
-          msg.message?.toLowerCase().includes('price') ||
-          msg.message?.toLowerCase().includes('cost') ||
-          msg.subject === 'partnership'
-        ) || []
-        setQuoteRequests(quoteMessages)
+        setSpecialDeliveryOrders([])
       }
     } catch (error) {
       console.error('Error loading bookings data:', error)
+      setSpecialDeliveryOrders([])
     } finally {
       setLoadingBookings(false)
     }
@@ -678,6 +688,10 @@ If you need any immediate assistance, please don't hesitate to call our customer
         }
       }
 
+      if (activeTab === 'quotes') {
+        loadQuotesData()
+      }
+
       if (activeTab === 'bookings') {
         loadBookingsData()
       }
@@ -782,7 +796,7 @@ If you need any immediate assistance, please don't hesitate to call our customer
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <nav className="flex space-x-8" aria-label="Tabs">
-            {['overview', 'users', 'parcels', 'bookings', 'support', 'livechat'].map((tab) => (
+            {['overview', 'users', 'parcels', 'quotes', 'bookings', 'support', 'livechat'].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -1288,6 +1302,212 @@ If you need any immediate assistance, please don't hesitate to call our customer
                 </ul>
               </div>
             )}
+          </div>
+        )}
+
+        {/* Quotes Tab */}
+        {activeTab === 'quotes' && (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold text-gray-900">Quotes Management</h2>
+              <div className="flex space-x-4">
+                <button
+                  onClick={loadQuotesData}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700"
+                >
+                  Refresh Data
+                </button>
+              </div>
+            </div>
+            
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="bg-white p-6 rounded-lg shadow">
+                <div className="flex items-center">
+                  <div className="p-2 bg-green-100 rounded-md">
+                    <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  </div>
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-gray-600">Total Quotes</p>
+                    <p className="text-2xl font-semibold text-gray-900">{quoteRequests.length}</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="bg-white p-6 rounded-lg shadow">
+                <div className="flex items-center">
+                  <div className="p-2 bg-blue-100 rounded-md">
+                    <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-gray-600">Pending Quotes</p>
+                    <p className="text-2xl font-semibold text-gray-900">{quoteRequests.filter(q => q.status === 'pending').length}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white p-6 rounded-lg shadow">
+                <div className="flex items-center">
+                  <div className="p-2 bg-yellow-100 rounded-md">
+                    <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-gray-600">Cold Chain Quotes</p>
+                    <p className="text-2xl font-semibold text-gray-900">{quoteRequests.filter(q => q.service_type === 'cold_chain').length}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white p-6 rounded-lg shadow">
+                <div className="flex items-center">
+                  <div className="p-2 bg-purple-100 rounded-md">
+                    <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-gray-600">International Quotes</p>
+                    <p className="text-2xl font-semibold text-gray-900">{quoteRequests.filter(q => q.service_type === 'international').length}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Quotes List */}
+            <div className="bg-white shadow rounded-lg">
+              <div className="px-6 py-4 border-b border-gray-200">
+                <h3 className="text-lg font-medium text-gray-900">All Quotes</h3>
+              </div>
+              
+              {loadingQuotes ? (
+                <div className="p-6 text-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                  <p className="mt-2 text-sm text-gray-600">Loading quotes...</p>
+                </div>
+              ) : quoteRequests.length === 0 ? (
+                <div className="p-6 text-center text-gray-500">
+                  <svg className="mx-auto h-12 w-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <p className="mt-2">No quotes found</p>
+                </div>
+              ) : (
+                <ul className="divide-y divide-gray-200">
+                  {quoteRequests.map((quote) => (
+                    <li key={quote.id} className="p-6 hover:bg-gray-50">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-sm font-medium text-gray-900">
+                                {quote.service_type === 'cold_chain' ? 'Cold Chain' : 'International Shipping'} Quote
+                              </p>
+                              <p className="text-sm text-gray-600">Quote ID: {quote.id}</p>
+                            </div>
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              quote.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                              quote.status === 'quoted' ? 'bg-blue-100 text-blue-800' :
+                              quote.status === 'accepted' ? 'bg-green-100 text-green-800' :
+                              'bg-red-100 text-red-800'
+                            }`}>
+                              {quote.status || 'pending'}
+                            </span>
+                          </div>
+                          
+                          <div className="mt-2 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600">
+                            <div>
+                              <span className="font-medium">From:</span>
+                              <p>{quote.pickup_location}</p>
+                            </div>
+                            <div>
+                              <span className="font-medium">To:</span>
+                              <p>{quote.delivery_location}</p>
+                            </div>
+                            <div>
+                              <span className="font-medium">Contact:</span>
+                              <p>{quote.contact_name}</p>
+                              <p>{quote.email}</p>
+                            </div>
+                            <div>
+                              <span className="font-medium">Submitted:</span>
+                              <p>{new Date(quote.created_at).toLocaleDateString()}</p>
+                              <p>{new Date(quote.created_at).toLocaleTimeString()}</p>
+                            </div>
+                          </div>
+
+                          {quote.service_type === 'cold_chain' && (
+                            <div className="mt-2 text-sm text-gray-600">
+                              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                <div>
+                                  <span className="font-medium">Temperature:</span>
+                                  <p>{quote.temperature_range}</p>
+                                </div>
+                                <div>
+                                  <span className="font-medium">Product Type:</span>
+                                  <p>{quote.product_type}</p>
+                                </div>
+                                <div>
+                                  <span className="font-medium">Special Requirements:</span>
+                                  <p>{quote.special_requirements || 'None'}</p>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          {quote.service_type === 'international' && (
+                            <div className="mt-2 text-sm text-gray-600">
+                              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                <div>
+                                  <span className="font-medium">Destination Country:</span>
+                                  <p>{quote.destination_country}</p>
+                                </div>
+                                <div>
+                                  <span className="font-medium">Shipping Method:</span>
+                                  <p>{quote.shipping_method}</p>
+                                </div>
+                                <div>
+                                  <span className="font-medium">Customs Declaration:</span>
+                                  <p>{quote.customs_declaration || 'Not provided'}</p>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          <div className="mt-2 text-sm text-gray-600">
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                              <div>
+                                <span className="font-medium">Weight:</span>
+                                <p>{quote.weight} kg</p>
+                              </div>
+                              <div>
+                                <span className="font-medium">Dimensions:</span>
+                                <p>{quote.length}×{quote.width}×{quote.height} cm</p>
+                              </div>
+                              <div>
+                                <span className="font-medium">Value:</span>
+                                <p>KSh {quote.package_value?.toLocaleString() || 'Not specified'}</p>
+                              </div>
+                              {quote.quoted_price && (
+                                <div>
+                                  <span className="font-medium">Quoted Price:</span>
+                                  <p className="text-green-600 font-semibold">KSh {quote.quoted_price.toLocaleString()}</p>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
           </div>
         )}
 

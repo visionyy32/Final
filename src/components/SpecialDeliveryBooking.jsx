@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { specialDeliveryService } from '../services/specialDeliveryService'
+import { expressDeliveryService } from '../services/expressDeliveryService'
 
 const SpecialDeliveryBooking = ({ 
   isOpen, 
@@ -51,13 +52,29 @@ const SpecialDeliveryBooking = ({
   // Calculate pricing when relevant fields change
   useEffect(() => {
     if (formData.distance && formData.weight && formData.productType && formData.fragility) {
-      const calculatedPricing = specialDeliveryService.calculatePricing(
-        parseFloat(formData.distance),
-        formData.productType,
-        serviceType,
-        parseFloat(formData.weight),
-        formData.fragility
-      )
+      let calculatedPricing
+      
+      if (serviceType === 'express_delivery') {
+        // Use Express Delivery pricing
+        calculatedPricing = expressDeliveryService.calculatePricing(
+          parseFloat(formData.weight),
+          parseFloat(formData.distance),
+          'standard', // Default express type
+          formData.fragility !== 'normal', // fragile handling
+          false, // insurance not required by default
+          0 // declared value
+        )
+      } else {
+        // Use Special Delivery pricing for other services
+        calculatedPricing = specialDeliveryService.calculatePricing(
+          parseFloat(formData.distance),
+          formData.productType,
+          serviceType,
+          parseFloat(formData.weight),
+          formData.fragility
+        )
+      }
+      
       setPricing(calculatedPricing)
     }
   }, [formData.distance, formData.weight, formData.productType, formData.fragility, serviceType])
@@ -147,18 +164,49 @@ const SpecialDeliveryBooking = ({
     setIsSubmitting(true)
     
     try {
-      const orderData = {
-        ...formData,
-        serviceType,
-        distance: parseFloat(formData.distance),
-        weight: parseFloat(formData.weight),
-        dimensions: formData.dimensions.length ? formData.dimensions : null
+      let result
+      
+      if (serviceType === 'express_delivery') {
+        // Use Express Delivery Service for express_delivery
+        const orderData = {
+          senderName: formData.senderName,
+          senderEmail: formData.senderEmail,
+          senderPhone: formData.senderPhone,
+          senderAddress: formData.senderAddress,
+          recipientName: formData.recipientName,
+          recipientPhone: formData.recipientPhone,
+          recipientAddress: formData.recipientAddress,
+          pickupDate: formData.pickupDate,
+          preferredPickupTime: formData.preferredTime,
+          productDescription: formData.productDescription,
+          productType: formData.productType,
+          packageType: formData.productType,
+          weight: parseFloat(formData.weight),
+          distance: parseFloat(formData.distance),
+          declaredValue: 0, // Default value
+          fragileHandling: formData.fragility !== 'normal',
+          insuranceRequired: false, // Default
+          expressType: 'standard', // Default for now
+          specialInstructions: formData.specialInstructions,
+          totalCost: pricing ? pricing.totalCost : 0
+        }
+        
+        result = await expressDeliveryService.createOrder(orderData)
+      } else {
+        // Use Special Delivery Service for other services
+        const orderData = {
+          ...formData,
+          serviceType,
+          distance: parseFloat(formData.distance),
+          weight: parseFloat(formData.weight),
+          dimensions: formData.dimensions.length ? formData.dimensions : null
+        }
+        
+        result = await specialDeliveryService.createOrder(orderData)
       }
       
-      const result = await specialDeliveryService.createOrder(orderData)
-      
       if (result.success) {
-        onSuccess && onSuccess(result.data, result.orderNumber, result.isGuest)
+        onSuccess && onSuccess(result.data, result.orderNumber || result.quoteNumber, result.isGuest)
         onClose()
         // Reset form
         setFormData({
@@ -174,6 +222,7 @@ const SpecialDeliveryBooking = ({
         setErrors({ general: result.error || 'Failed to create order. Please try again.' })
       }
     } catch (error) {
+      console.error('Booking error:', error)
       setErrors({ general: 'An unexpected error occurred. Please try again.' })
     } finally {
       setIsSubmitting(false)
